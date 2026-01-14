@@ -7,8 +7,10 @@
     --accent-color: #007aff; /* A clean, modern blue */
     --card-bg: #2c2c2e;
     --card-border: #424245;
+    --chip-border: #424245;
     --shadow-color: rgba(0, 0, 0, 0.2);
-    --icon-filter: grayscale(1) brightness(10); /* Makes icons white/light */
+    /* Invert black icons to white for dark theme */
+    --icon-filter: invert(1);
 }
 
 [data-theme="light"] {
@@ -19,10 +21,12 @@
     --accent-color: #007aff;
     --card-bg: #ffffff;
     --card-border: #e5e5ea;
+    --chip-border: #e5e5ea;
     --chip-active-bg: #121212;
     --chip-active-text: #ffffff;
     --shadow-color: rgba(0, 0, 0, 0.1);
-    --icon-filter: grayscale(1) brightness(0.1); /* Makes icons dark */
+    /* Keep black icons black for light theme */
+    --icon-filter: none;
 }
 
 /* --- BASE & BACKGROUND --- */
@@ -58,15 +62,19 @@ body {
     box-shadow: 0 2px 8px var(--shadow-color);
 }
 
+#theme-toggle svg {
+    stroke: var(--text-primary);
+}
+
 /* --- HEADER & PROFILE --- */
 .header {
     text-align: center;
     padding: 80px 20px 40px;
 }
 
-.header img {
-    width: 140px;
-    height: 140px;
+.header .profile-avatar {
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     border: 4px solid var(--bg-secondary);
     object-fit: cover;
@@ -85,44 +93,6 @@ body {
     max-width: 450px;
     margin: 0 auto 30px;
     line-height: 1.6;
-}
-
-/* --- SOCIAL ICONS (REDESIGNED) --- */
-.social-links {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.social-links a {
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--bg-secondary);
-    border: 1px solid var(--chip-border);
-}
-
-.social-links a:hover {
-    transform: scale(1.1);
-    border-color: var(--accent-color);
-    box-shadow: 0 0 15px -2px var(--accent-color);
-}
-
-.social-links a img {
-    height: 24px;
-    width: 24px;
-    filter: var(--icon-filter);
-    transition: filter 0.3s ease;
-}
-
-/* On hover, reveal the original icon color */
-.social-links a:hover img {
-    filter: none;
 }
 
 .container {
@@ -193,7 +163,6 @@ body {
 .card.hidden {
     opacity: 0;
     transform: scale(0.95);
-    /* We use this instead of display:none to allow for animation */
     height: 0;
     padding: 0;
     margin: 0;
@@ -248,13 +217,12 @@ body {
 
 .btn img {
     height: 18px;
-    /* Invert icon color for dark buttons on light theme */
-    filter: invert(1) brightness(2); /* Keep button icons white */
+    filter: invert(1) brightness(2);
 }
 
 .btn:hover {
     transform: scale(1.03);
-    background-color: #0062cc; /* A slightly darker blue on hover */
+    background-color: #0062cc;
 }
 
 /* --- FOOTER --- */
@@ -262,6 +230,26 @@ body {
     text-align: center;
     padding: 40px 20px;
     margin-top: 40px;
+    border-top: 1px solid var(--card-border);
+}
+
+.footer-socials {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.footer-socials a img {
+    height: 28px;
+    width: 28px;
+    filter: var(--icon-filter);
+    transition: all 0.2s ease-in-out;
+}
+
+.footer-socials a:hover img {
+    filter: none;
+    transform: scale(1.15);
 }
 
 .footer p {
@@ -275,11 +263,11 @@ body {
     .header {
         padding: 40px 15px 30px;
     }
-    .header img {
+    .header .profile-avatar {
         width: 100px;
         height: 100px;
     }
     .header h1 {
-        font-size: 1.8rem;
+        font-sze: 1.8rem;
     }
 }

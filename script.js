@@ -12,18 +12,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set page title
         document.title = `${config.profile.name} | Links`;
 
+        // Create social links HTML
+        const socialLinksHTML = config.socials.map(social => `
+            <a href="${social.url}" target="_blank" aria-label="${social.name}" title="${social.name}">
+                <img src="${social.icon}" alt="${social.name} icon">
+            </a>
+        `).join('');
+
         // Render Header
         header.innerHTML = `
             <img src="${config.profile.avatar}" alt="${config.profile.name}'s avatar">
             <h1>${config.profile.name}</h1>
-            {/* Replace newline characters with <br> tags for proper rendering */}
             <p>${config.profile.bio.replace(/\n/g, '<br />')}</p>
             <div class="social-links">
-                ${config.socials.map(social => `
-                    <a href="${social.url}" target="_blank" aria-label="${social.name}" title="${social.name}">
-                        <img src="${social.icon}" alt="${social.name} icon">
-                    </a>
-                `).join('')}
+                ${socialLinksHTML}
             </div>
         `;
 
@@ -53,7 +55,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Render Footer
         if (config.footerText) {
-            footer.innerHTML = `<p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
+            footer.innerHTML = `
+                <div class="footer-socials">
+                    ${socialLinksHTML}
+                </div>
+                <p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>
+            `;
         }
     }
 
@@ -77,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const categories = card.getAttribute('data-category');
                 const shouldShow = filter === 'all' || (categories && categories.split(' ').includes(filter));
                 
-                // Use a class for animations instead of style.display
                 card.classList.toggle('hidden', !shouldShow);
             });
         });
@@ -99,11 +105,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateThemeIcon(theme) {
         const icon = theme === 'dark' ? 'sun' : 'moon';
         themeToggle.innerHTML = `<i data-feather="${icon}"></i>`;
-        feather.replace(); // Re-render Feather icons
+        feather.replace();
     }
 
     function applyInitialTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
     }
@@ -114,12 +120,8 @@ document.addEventListener('DOMContentLoaded', function() {
         applyInitialTheme();
         renderContent();
         setupEventListeners();
-        
-        // This function from the Feather Icons library turns the <i> tags into SVG icons.
-        // It needs to be called after content is rendered.
         feather.replace();
     }
 
-    // Run the app
     init();
 });

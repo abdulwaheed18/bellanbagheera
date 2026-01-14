@@ -14,7 +14,7 @@ const config = {
         { name: 'YouTube', url: 'https://www.youtube.com/@bella_and_bagheera', icon: 'images/icons/youtube.svg' },
         { name: 'Facebook', url: 'https://www.facebook.com/bellaNbagheera', icon: 'images/icons/facebook.svg' },
         { name: 'WhatsApp', url: 'https://api.whatsapp.com/send?phone=919336536492', icon: 'images/icons/whatsapp.svg' }, // TODO: Add your WhatsApp URL
-        { name: 'Amazon', url: 'https://www.amazon.com/shop/bella_and_bagheera', icon: 'images/icons/amazon.svg' } // TODO: Add your Amazon Storefront URL
+        { name: 'Amazon', url: 'https://www.amazon.in/shop/bella_and_bagheera', icon: 'images/icons/amazon.svg' } // TODO: Add your Amazon Storefront URL
     ],
 
     // Product categories
