@@ -3,42 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Title will be set by JavaScript -->
     <title>Loading...</title>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
 
-    <!-- Icons (from Feather Icons) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
 
-    <div class="theme-switcher">
-        <button id="theme-toggle" aria-label="Switch theme">
-            <i data-feather="moon"></i>
-        </button>
+<div class="top-nav">
+    <div class="search-container">
+        <i data-feather="search" class="search-icon"></i>
+        <input type="text" id="product-search" placeholder="Search cat gear...">
     </div>
+    <button id="theme-toggle" aria-label="Switch theme">
+        <i data-feather="moon"></i>
+    </button>
+</div>
 
-    <!-- Header will be populated by JavaScript -->
-    <header class="header"></header>
+<header class="header"></header>
 
-    <main class="container">
-        <!-- Categories will be populated by JavaScript -->
+<main class="container">
+    <div class="filter-section">
         <div class="categories"></div>
+    </div>
+    <div class="grid" id="product-grid"></div>
+</main>
 
-        <!-- Product grid will be populated by JavaScript -->
-        <div class="grid"></div>
-    </main>
+<footer class="footer"></footer>
 
-    <!-- Footer will be populated by JavaScript -->
-    <footer class="footer"></footer>
-
-    <!-- JavaScript files -->
-    <script src="config.js"></script>
-    <script src="script.js"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
