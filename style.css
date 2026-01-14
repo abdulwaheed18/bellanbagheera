@@ -1,0 +1,285 @@
+/* --- THEME & LAYOUT VARIABLES --- */
+:root {
+    --bg-color: #1a1a1a;
+    --bg-secondary: #242424;
+    --text-primary: #f5f5f5;
+    --text-secondary: #b3b3b3;
+    --accent-color: #007aff; /* A clean, modern blue */
+    --card-bg: #2c2c2e;
+    --card-border: #424245;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --icon-filter: grayscale(1) brightness(10); /* Makes icons white/light */
+}
+
+[data-theme="light"] {
+    --bg-color: #f4f4f8;
+    --bg-secondary: #ffffff;
+    --text-primary: #121212;
+    --text-secondary: #555;
+    --accent-color: #007aff;
+    --card-bg: #ffffff;
+    --card-border: #e5e5ea;
+    --chip-active-bg: #121212;
+    --chip-active-text: #ffffff;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --icon-filter: grayscale(1) brightness(0.1); /* Makes icons dark */
+}
+
+/* --- BASE & BACKGROUND --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
+}
+
+/* --- THEME SWITCHER --- */
+.theme-switcher {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+#theme-toggle {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* --- HEADER & PROFILE --- */
+.header {
+    text-align: center;
+    padding: 80px 20px 40px;
+}
+
+.header img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-secondary);
+    object-fit: cover;
+    box-shadow: 0 10px 25px var(--shadow-color);
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    margin: 0 0 10px;
+    font-size: 2.25rem;
+    font-weight: 700;
+}
+
+.header p {
+    color: var(--text-secondary);
+    max-width: 450px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
+}
+
+/* --- SOCIAL ICONS (REDESIGNED) --- */
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.social-links a {
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--chip-border);
+}
+
+.social-links a:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px -2px var(--accent-color);
+}
+
+.social-links a img {
+    height: 24px;
+    width: 24px;
+    filter: var(--icon-filter);
+    transition: filter 0.3s ease;
+}
+
+/* On hover, reveal the original icon color */
+.social-links a:hover img {
+    filter: none;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* --- CATEGORY CHIPS --- */
+.categories {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 30px;
+}
+
+.chip {
+    padding: 10px 20px;
+    background-color: var(--bg-secondary);
+    border-radius: 20px;
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
+}
+
+.chip:hover {
+    transform: translateY(-2px);
+    color: var(--text-primary);
+    background-color: var(--card-bg);
+}
+
+.chip.active {
+    background-color: var(--chip-active-bg);
+    color: var(--chip-active-text);
+    font-weight: 600;
+    border-color: var(--accent-color);
+}
+
+/* --- PRODUCT GRID & CARDS --- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.card.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    /* We use this instead of display:none to allow for animation */
+    height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    border: none;
+    gap: 0;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px var(--shadow-color);
+    border-color: var(--card-border);
+}
+
+.card img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.card-content {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    flex-grow: 1;
+    margin-bottom: 15px;
+}
+
+.btn {
+    background: var(--chip-active-bg);
+    color: var(--chip-active-text);
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+}
+
+.btn img {
+    height: 18px;
+    /* Invert icon color for dark buttons on light theme */
+    filter: invert(1) brightness(2); /* Keep button icons white */
+}
+
+.btn:hover {
+    transform: scale(1.03);
+    background-color: #0062cc; /* A slightly darker blue on hover */
+}
+
+/* --- FOOTER --- */
+.footer {
+    text-align: center;
+    padding: 40px 20px;
+    margin-top: 40px;
+}
+
+.footer p {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 600px) {
+    .header {
+        padding: 40px 15px 30px;
+    }
+    .header img {
+        width: 100px;
+        height: 100px;
+    }
+    .header h1 {
+        font-size: 1.8rem;
+    }
+}
