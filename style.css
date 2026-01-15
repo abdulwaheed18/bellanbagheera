@@ -80,10 +80,22 @@ h1, h2, h3, h4, h5, h6 {
 
 .logo {
     font-family: var(--font-primary);
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    color: var(--color-text);
+    color: #fff;
     text-decoration: none;
+    background: var(--color-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    line-height: 1;
+}
+
+.logo:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    filter: brightness(1.1);
 }
 
 .search-container {
