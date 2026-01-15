@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/micromodal-slide/dist/micromodal.css">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
@@ -31,7 +32,24 @@
 
 <footer class="footer"></footer>
 
+<div class="modal micromodal-slide" id="notes-modal" aria-hidden="true">
+    <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+        <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="notes-modal-title">
+            <header class="modal__header">
+                <h2 class="modal__title" id="notes-modal-title">
+                    <!-- Title will be injected here -->
+                </h2>
+                <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+            </header>
+            <main class="modal__content" id="notes-modal-content">
+                <!-- Notes content will be injected here -->
+            </main>
+        </div>
+    </div>
+</div>
+
 <script src="config.js"></script>
+<script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

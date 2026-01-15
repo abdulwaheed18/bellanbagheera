@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'product url': 'url',
                 'image url': 'image',
                 'store': 'store',
-                'category': 'category'
+                'category': 'category',
+                'notes': 'notes'
             };
             const mappedHeader = header.map(h => keyMap[h] || h);
 
@@ -90,6 +91,27 @@ document.addEventListener('DOMContentLoaded', function() {
         return product.url;
     }
 
+    /**
+     * Sanitizes text and converts URLs into clickable links.
+     * @param {string} text The text to process.
+     * @returns {string} HTML string with links.
+     */
+    function linkify(text) {
+        if (!text) return '';
+        // A simple sanitizer
+        const sanitizedText = text.replace(/[&<>"']/g, match => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[match]));
+
+        // Find URLs and wrap them in <a> tags
+        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+        return sanitizedText.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    }
+
     function getSocialsHTML() { return config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join(''); }
     function renderProducts(filter = 'all', query = '') {
         if (fetchErrors.length > 0) { grid.innerHTML = `<div class="error-box"><h3>Failed to Load Products</h3><ul>${fetchErrors.map(err => `<li>${err}</li>`).join('')}</ul></div>`; return; }
@@ -99,15 +121,33 @@ document.addEventListener('DOMContentLoaded', function() {
         grid.innerHTML = filtered.map((product, index) => {
             const productUrl = getCleanProductUrl(product);
             const storeName = product.store || 'Store';
+
+            // Find the original index of the product in the master list for stable referencing
+            const originalIndex = allProducts.findIndex(p => p === product);
+            const notesHTML = product.notes
+                ? `<button class="notes-trigger" data-product-index="${originalIndex}">
+                       <i data-feather="file-text"></i> Read Notes
+                   </button>`
+                : '';
+
             let buttonHTML;
 
             if (storeName.toLowerCase() === 'amazon') {
-                buttonHTML = `<div class="btn btn-amazon">View on Amazon</div>`;
+                buttonHTML = `<a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-amazon">View on Amazon</a>`;
             } else {
-                buttonHTML = `<div class="btn">View on ${storeName}</div>`;
+                buttonHTML = `<a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="btn">View on ${storeName}</a>`;
             }
 
-            return `<a href="${productUrl}" target="_blank" class="card" style="animation-delay: ${index * 50}ms"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div>${buttonHTML}</div></a>`;
+            return `<div class="card" style="animation-delay: ${index * 50}ms">
+                        <a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="card-image-link">
+                            <img src="${product.image}" alt="${product.title}">
+                        </a>
+                        <div class="card-content">
+                            <div class="card-title">${product.title}</div>
+                        </div>
+                        <div class="card-actions">${notesHTML}</div>
+                        <div class="card-footer">${buttonHTML}</div>
+                    </div>`;
         }).join('');
     }
     function renderUI() {
@@ -176,18 +216,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 3. INITIALIZATION ---
+    const themeToggleButton = document.getElementById('theme-toggle');
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        themeToggleButton.innerHTML = theme === 'dark' ? '<i data-feather="moon"></i>' : '<i data-feather="sun"></i>';
+        // Redraw all feather icons on the page to apply color changes
+        feather.replace();
+    }
+
     async function init() {
-        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+        // Set initial theme and icon
+        applyTheme(localStorage.getItem('theme') || 'dark');
+
         await loadAllProducts();
-        renderUI();
+        // Render UI without calling feather.replace() again, as applyTheme handles it
+        renderUI(); 
 
         const categorySelect = document.getElementById('category-select');
 
         searchInput.addEventListener('input', e => renderProducts(categorySelect.value, e.target.value));
         categorySelect.addEventListener('change', e => renderProducts(e.target.value, searchInput.value));
 
-        document.getElementById('theme-toggle').addEventListener('click', () => { const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); feather.replace(); });
+        // Event delegation for the notes modal trigger
+        grid.addEventListener('click', e => {
+            const notesButton = e.target.closest('.notes-trigger');
+            if (notesButton) {
+                e.preventDefault();
+                const productIndex = notesButton.dataset.productIndex;
+                if (productIndex !== undefined) {
+                    const product = allProducts[productIndex];
+                    if (product) {
+                        document.getElementById('notes-modal-title').textContent = product.title;
+                        document.getElementById('notes-modal-content').innerHTML = linkify(product.notes);
+                        MicroModal.show('notes-modal');
+                    }
+                }
+            }
+        });
 
+        themeToggleButton.addEventListener('click', () => {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        MicroModal.init({
+            onClose: () => feather.replace(), // Redraw icons in main page if needed
+            disableScroll: true,
+            awaitCloseAnimation: true
+        });
         initPawCursor();
     }
     init();
