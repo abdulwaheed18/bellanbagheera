@@ -81,11 +81,25 @@ document.addEventListener('DOMContentLoaded', function() {
         grid.innerHTML = filtered.map(product => `<a href="${product.url}" target="_blank" class="card"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div><div class="btn">View on ${product.store || 'Store'}</div></div></a>`).join('');
     }
     function renderUI() {
+        // --- WhatsApp & Collab Button ---
+        const whatsAppSocial = config.socials.find(s => s.name.toLowerCase() === 'whatsapp');
+        let collabButtonHTML = '';
+        if (whatsAppSocial) {
+            collabButtonHTML = `
+                <a href="${whatsAppSocial.url}" target="_blank" rel="noopener noreferrer" class="collab-button">
+                    <img src="${whatsAppSocial.icon}" alt="WhatsApp Icon" class="whatsapp-icon">
+                    <div>
+                        <strong>Quick Connect for Collabs</strong>
+                        <span>Messages only, no calls please.</span>
+                    </div>
+                </a>`;
+        }
+
         document.title = `${config.profile.name} | Links`;
-        header.innerHTML = `<img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar"><h1>${config.profile.name}</h1><p>${config.profile.bio.replace(/\n/g, '<br />')}</p><div class="social-links">${getSocialsHTML()}</div>`;
+        header.innerHTML = `<img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar"><h1>${config.profile.name}</h1><p>${config.profile.bio.replace(/\n/g, '<br />')}</p>${collabButtonHTML}<div class="social-links">${getSocialsHTML()}</div>`;
         const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
         categoriesContainer.innerHTML = '<div class="chip active" data-filter="all">All Items</div>' + categories.map(c => `<div class="chip" data-filter="${c}">${c}</div>`).join('');
-        footer.innerHTML = `<div class="footer-socials">${getSocialsHTML()}</div><p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
+        footer.innerHTML = `<div class="footer-nav">${config.footerLinks.map(link => `<a href="${link.url}">${link.name}</a>`).join('')}</div><div class="footer-socials">${getSocialsHTML()}</div><p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
         renderProducts();
         feather.replace();
     }

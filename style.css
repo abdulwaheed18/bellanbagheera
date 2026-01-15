@@ -35,7 +35,18 @@ body {
 
 .header {
     text-align: center;
-    padding: 100px 20px 40px;
+    padding: 80px 20px 40px; /* Reduced top padding to account for fixed nav */
+}
+
+.site-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3rem;
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+}
+
+.site-tagline {
+    color: var(--text-secondary);
 }
 
 .profile-avatar {
@@ -67,21 +78,15 @@ body {
     gap: 15px;
     margin-top: 20px;
 }
-
-.social-links a img, .footer-socials a img {
-    width: 28px;
-    height: 28px;
+.social-links a, .footer-socials a {
+    color: var(--text-secondary);
+    display: inline-block; /* Ensures transform works correctly */
     transition: transform 0.3s ease;
-    filter: brightness(0) invert(1);
 }
 
-[data-theme="light"] .social-links a img,
-[data-theme="light"] .footer-socials a img {
-    filter: none;
-}
-
-.social-links a:hover img {
+.social-links a:hover, .footer-socials a:hover {
     transform: translateY(-5px);
+    color: var(--accent-color);
 }
 
 .search-container {
@@ -157,10 +162,61 @@ body {
     margin-top: 15px;
 }
 
+.collab-button {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 15px 20px;
+    border-radius: 15px;
+    text-decoration: none;
+    color: var(--text-primary);
+    margin: 30px auto;
+    max-width: 400px;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.collab-button:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 20px 0 #fb923c20;
+}
+
+.collab-button strong {
+    display: block;
+    font-weight: 600;
+}
+
+.collab-button span {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.whatsapp-icon {
+    width: 20px;
+    height: 20px;
+    /* The provided SVG has its own colors, so we only need to size it */
+}
+
 .footer {
     text-align: center;
     padding: 60px 20px;
     border-top: 1px solid var(--glass-border);
+}
+
+.footer-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px 30px;
+    margin-bottom: 30px;
+}
+.footer-nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
 .error-box {
