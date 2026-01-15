@@ -206,6 +206,14 @@ body {
     border-top: 1px solid var(--glass-border);
 }
 
+.affiliate-disclosure {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
+}
+
 .footer-nav {
     display: flex;
     justify-content: center;

@@ -13,16 +13,10 @@ const config = {
         { name: 'Amazon', url: 'https://www.amazon.in/shop/bella_and_bagheera', icon: 'images/icons/amazon.svg' }
     ],
 
-    footerLinks: [
-        { name: 'About Us', url: '#' },
-        { name: 'Shipping Policy', url: '#' },
-        { name: 'Returns', url: '#' },
-        { name: 'Contact', url: '#' }
-    ],
-
     // The single source for all your products.
     // Publish your main sheet as a CSV and paste the link here.
     googleSheetUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQes7iDVn3SOqRJrJRWUuXgJu3YetVDNIUR9_R_SpLhBeVXTJNY7au_E2f0EBeHZTjaycwtTzgnvQ5x/pub?output=csv',
 
-    footerText: "© {year} Bella, Nawaab & Bagheera"
+    footerText: "© {year} Bella, Nawaab & Bagheera",
+    affiliateDisclosure: "As an affiliate, I may earn from qualifying purchases. This comes at no extra cost to you."
 };
