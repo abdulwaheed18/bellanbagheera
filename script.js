@@ -5,164 +5,99 @@ document.addEventListener('DOMContentLoaded', function() {
     const header = document.querySelector('.header');
     const footer = document.querySelector('.footer');
 
-    let allProducts = []; // This will hold all products fetched from Google Sheets.
+    let allProducts = [];
+    const fetchErrors = [];
 
-    // --- 1. DATA FETCHING & PARSING ---
+    // --- 1. DATA FETCHING & PARSING (FINAL, CORRECTED VERSION) ---
 
-    /**
-     * Parses raw CSV text into an array of JavaScript objects.
-     * Assumes the first row is the header.
-     * @param {string} text - The raw CSV text.
-     * @returns {Array<Object>} An array of product objects.
-     */
     function parseCSV(text) {
         try {
-            const lines = text.trim().split('\\n');
-            if (lines.length < 2) return []; // Return empty if no data rows.
+            // Correctly split by newline characters (\n) or carriage return + newline (\r\n).
+            // This was the source of the bug.
+            const lines = text.trim().split(/\r?\n/);
 
-            const header = lines[0].split(',').map(h => h.trim());
+            if (lines.length < 2) {
+                fetchErrors.push("Parser Error: The data could not be split into lines. The file may be empty or in an unexpected format.");
+                return [];
+            }
 
-            return lines.slice(1).map(line => {
-                const values = line.split(',').map(v => v.trim());
-                return header.reduce((obj, key, index) => {
-                    obj[key] = values[index];
+            const headerLine = lines[0];
+            const delimiter = ',';
+
+            const header = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
+
+            const keyMap = {
+                'title': 'title',
+                'product url': 'url',
+                'image url': 'image',
+                'store': 'store',
+                'category': 'category'
+            };
+            const mappedHeader = header.map(h => keyMap[h] || h);
+
+            const products = lines.slice(1).map(line => {
+                if (!line.trim()) return null;
+                const values = line.split(delimiter).map(v => v.trim());
+                return mappedHeader.reduce((obj, key, index) => {
+                    if (key) obj[key] = values[index];
                     return obj;
                 }, {});
-            });
-        } catch (error) {
-            console.error("Failed to parse CSV:", error);
-            return [];
-        }
-    }
+            }).filter(Boolean);
 
-    /**
-     * Fetches product data from a single Google Sheet source URL.
-     * @param {Object} source - An object containing the category and URL.
-     * @returns {Promise<Array<Object>>} A promise that resolves to an array of products.
-     */
-    async function fetchProductsFromSource(source) {
-        try {
-            const response = await fetch(source.url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (products.length === 0 && fetchErrors.length === 0) {
+                fetchErrors.push("The file was fetched successfully, but no products were found after parsing. Please check the sheet's content.");
             }
-            const csvText = await response.text();
-            const products = parseCSV(csvText);
+            return products;
 
-            // Add the category from the config to each product
-            return products.map(product => ({ ...product, category: source.category }));
         } catch (error) {
-            console.error(`Error fetching or parsing from ${source.url}:`, error);
-            // Return an empty array on failure so Promise.all doesn't fail completely.
+            console.error("A fatal error occurred during CSV parsing:", error);
+            fetchErrors.push("A critical error occurred while parsing the data. See the browser's developer console for details.");
             return [];
         }
     }
 
-    /**
-     * Fetches products from all configured sources and triggers the initial UI render.
-     */
     async function loadAllProducts() {
-        const productPromises = config.googleSheetSources.map(fetchProductsFromSource);
-        const productArrays = await Promise.all(productPromises);
-        allProducts = productArrays.flat(); // Flatten the array of arrays into a single list.
-
-        renderUI(); // Render the full UI now that we have the product data.
+        if (!config.googleSheetUrl || !config.googleSheetUrl.startsWith('https://docs.google.com/spreadsheets/d/e/')) {
+            fetchErrors.push("Invalid Google Sheet URL in config.js.");
+            return;
+        }
+        try {
+            const response = await fetch(config.googleSheetUrl);
+            if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+            allProducts = parseCSV(await response.text());
+        } catch (error) {
+            console.error(`Error fetching from ${config.googleSheetUrl}:`, error);
+            fetchErrors.push("Could not load products. Check the URL and ensure the sheet is published correctly.");
+        }
     }
 
     // --- 2. UI RENDERING ---
-
-    function getSocialsHTML() {
-        return config.socials.map(social => `
-            <a href="${social.url}" target="_blank" aria-label="${social.name}">
-                <img src="${social.icon}" alt="${social.name}">
-            </a>
-        `).join('');
-    }
-
+    function getSocialsHTML() { return config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join(''); }
     function renderProducts(filter = 'all', query = '') {
-        const filtered = allProducts.filter(p => {
-            const matchesCategory = filter === 'all' || (p.category && p.category.split(' ').includes(filter));
-            const matchesSearch = p.title && p.title.toLowerCase().includes(query.toLowerCase());
-            return matchesCategory && matchesSearch;
-        });
-
-        if (filtered.length === 0) {
-            grid.innerHTML = '<p>No products found.</p>';
-            return;
-        }
-
-        grid.innerHTML = filtered.map(product => `
-            <a href="${product.url}" target="_blank" class="card">
-                <img src="${product.image}" alt="${product.title}">
-                <div class="card-content">
-                    <div class="card-title">${product.title}</div>
-                    <div class="btn">View on ${product.store || 'Store'}</div>
-                </div>
-            </a>
-        `).join('');
+        if (fetchErrors.length > 0) { grid.innerHTML = `<div class="error-box"><h3>Failed to Load Products</h3><ul>${fetchErrors.map(err => `<li>${err}</li>`).join('')}</ul></div>`; return; }
+        if (allProducts.length === 0) { grid.innerHTML = '<p>No products found. Your sheet might be empty or the format is unreadable.</p>'; return; }
+        const filtered = allProducts.filter(p => (filter === 'all' || (p.category && p.category.toLowerCase() === filter.toLowerCase())) && (p.title && p.title.toLowerCase().includes(query.toLowerCase())));
+        if (filtered.length === 0) { grid.innerHTML = '<p>No products match your search.</p>'; return; }
+        grid.innerHTML = filtered.map(product => `<a href="${product.url}" target="_blank" class="card"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div><div class="btn">View on ${product.store || 'Store'}</div></div></a>`).join('');
     }
-
     function renderUI() {
-        // Set page title
         document.title = `${config.profile.name} | Links`;
-
-        // Render Header
-        header.innerHTML = `
-            <img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar">
-            <h1>${config.profile.name}</h1>
-            <p>${config.profile.bio.replace(/\\n/g, '<br />')}</p>
-        `;
-
-        // Render Categories
-        let chips = '<div class="chip active" data-filter="all">All Items</div>';
-        chips += config.categories.map(c => `<div class="chip" data-filter="${c.id}">${c.name}</div>`).join('');
-        categoriesContainer.innerHTML = chips;
-
-        // Render Footer
-        footer.innerHTML = `
-            <div class="footer-socials">${getSocialsHTML()}</div>
-            <p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>
-        `;
-
-        // Initial render of products
+        header.innerHTML = `<img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar"><h1>${config.profile.name}</h1><p>${config.profile.bio.replace(/\n/g, '<br />')}</p><div class="social-links">${getSocialsHTML()}</div>`;
+        const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+        categoriesContainer.innerHTML = '<div class="chip active" data-filter="all">All Items</div>' + categories.map(c => `<div class="chip" data-filter="${c}">${c}</div>`).join('');
+        footer.innerHTML = `<div class="footer-socials">${getSocialsHTML()}</div><p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
         renderProducts();
-        feather.replace(); // Ensure all icons are rendered.
+        feather.replace();
     }
 
-    // --- 3. EVENT LISTENERS ---
-
-    function setupEventListeners() {
-        searchInput.addEventListener('input', (e) => {
-            const activeFilter = document.querySelector('.chip.active').dataset.filter;
-            renderProducts(activeFilter, e.target.value);
-        });
-
-        categoriesContainer.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('chip')) return;
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-            renderProducts(e.target.dataset.filter, searchInput.value);
-        });
-
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            // Re-apply icon filters based on the new theme
-            feather.replace();
-        });
+    // --- 3. INITIALIZATION ---
+    async function init() {
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+        await loadAllProducts();
+        renderUI();
+        searchInput.addEventListener('input', e => renderProducts(document.querySelector('.chip.active').dataset.filter, e.target.value));
+        categoriesContainer.addEventListener('click', e => { if (!e.target.classList.contains('chip')) return; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); e.target.classList.add('active'); renderProducts(e.target.dataset.filter, searchInput.value); });
+        document.getElementById('theme-toggle').addEventListener('click', () => { const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); feather.replace(); });
     }
-
-    // --- 4. INITIALIZATION ---
-
-    function init() {
-        // Apply theme first to prevent flash of unstyled content
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        setupEventListeners();
-        loadAllProducts(); // Fetch data and render the page.
-    }
-
     init();
 });
