@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const grid = document.getElementById('product-grid');
     const searchInput = document.getElementById('product-search');
-    const categoriesContainer = document.querySelector('.categories');
+    const filterContainer = document.querySelector('.filter-section');
     const header = document.querySelector('.header');
     const footer = document.querySelector('.footer');
 
@@ -90,7 +90,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     productUrl = `https://www.amazon.in/dp/${asinMatch[1]}`;
                 }
             }
-            return `<a href="${productUrl}" target="_blank" class="card"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div><div class="btn">View on ${product.store || 'Store'}</div></div></a>`;
+
+        const storeName = product.store || 'Store';
+        let buttonHTML;
+
+        if (storeName.toLowerCase() === 'amazon') {
+            // A less bulky, outline-style button for Amazon products.
+            buttonHTML = `<div class="btn btn-amazon">View on Amazon</div>`;
+        } else {
+            buttonHTML = `<div class="btn">View on ${storeName}</div>`;
+        }
+
+        return `<a href="${productUrl}" target="_blank" class="card"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div>${buttonHTML}</div></a>`;
         }).join('');
     }
     function renderUI() {
@@ -111,7 +122,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.title = `${config.profile.name} | Links`;
         header.innerHTML = `<img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar"><h1>${config.profile.name}</h1><p>${config.profile.bio.replace(/\n/g, '<br />')}</p>${collabButtonHTML}<div class="social-links">${getSocialsHTML()}</div>`;
         const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-        categoriesContainer.innerHTML = '<div class="chip active" data-filter="all">All Items</div>' + categories.map(c => `<div class="chip" data-filter="${c}">${c}</div>`).join('');
+        const optionsHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        filterContainer.innerHTML = `
+            <label for="category-select" class="category-label">Category:</label>
+            <div class="select-wrapper">
+                <select id="category-select">
+                    <option value="all">All Categories</option>
+                    ${optionsHTML}
+                </select>
+            </div>`;
         const disclosureHTML = config.affiliateDisclosure ? `<p class="affiliate-disclosure">${config.affiliateDisclosure}</p>` : '';
         footer.innerHTML = `${disclosureHTML}<div class="footer-socials">${getSocialsHTML()}</div><p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
         renderProducts();
@@ -123,8 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
         await loadAllProducts();
         renderUI();
-        searchInput.addEventListener('input', e => renderProducts(document.querySelector('.chip.active').dataset.filter, e.target.value));
-        categoriesContainer.addEventListener('click', e => { if (!e.target.classList.contains('chip')) return; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); e.target.classList.add('active'); renderProducts(e.target.dataset.filter, searchInput.value); });
+
+        const categorySelect = document.getElementById('category-select');
+
+        searchInput.addEventListener('input', e => renderProducts(categorySelect.value, e.target.value));
+        categorySelect.addEventListener('change', e => renderProducts(e.target.value, searchInput.value));
+
         document.getElementById('theme-toggle').addEventListener('click', () => { const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); feather.replace(); });
     }
     init();
