@@ -289,6 +289,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
+     * Adds a class to the header when the user scrolls down.
+     */
+    function initHeaderScroll() {
+        const header = document.querySelector('.header');
+        if (!header) return;
+
+        window.addEventListener('scroll', () => {
+            header.classList.toggle('header--scrolled', window.scrollY > 50);
+        });
+    }
+
+    /**
      * Initializes the "Back to Top" button functionality.
      */
     function initBackToTopButton() {
@@ -359,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         initPawCursor();
         initBackToTopButton();
+        initHeaderScroll();
     }
     init();
 });

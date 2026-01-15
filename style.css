@@ -23,13 +23,13 @@
 
 /* Dark theme styles */
 :root[data-theme="dark"] {
-    --color-bg: #1a1a1a;
-    --color-text: #EAEAEA;
+    --color-bg: #181818; /* Softer, more premium black */
+    --color-text: #E0E0E0;
     --color-primary: #F09D51;
-    --color-surface: #252525;
+    --color-surface: #2a2a2a;
     --color-accent: #50a1ff; /* A lighter blue for dark mode */
-    --color-border: #333333;
-    --color-muted: #AAAAAA;
+    --color-border: #383838;
+    --color-muted: #9e9e9e;
 }
 
 /* --- Base & Typography --- */
@@ -70,12 +70,19 @@ h1, h2, h3, h4, h5, h6 {
     top: 0;
     z-index: 10;
     box-shadow: var(--shadow-sm);
+    transition: padding 0.3s ease, box-shadow 0.3s ease;
 }
 
 .header__container {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.header--scrolled {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    box-shadow: var(--shadow-md);
 }
 
 .logo {
@@ -138,10 +145,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .header__actions button:hover {
     color: var(--color-primary);
-}
-
-.header__actions button:hover {
-    color: var(--color-primary);
     transform: scale(1.1);
 }
 .header__actions button {
@@ -153,8 +156,13 @@ h1, h2, h3, h4, h5, h6 {
 .hero {
     text-align: center;
     padding: 6rem 0;
-    overflow: hidden; /* Contain animations */
-    background: linear-gradient(135deg, rgba(248, 247, 244, 0.2), rgba(229, 140, 66, 0.1));
+    overflow: hidden;
+    background-color: var(--color-bg);
+    /* Add a subtle paw pattern over the gradient */
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg' fill='rgba(44,42,42,0.03)'%3E%3Ccircle cx='50' cy='65' r='25'/%3E%3Ccircle cx='20' cy='25' r='10'/%3E%3Ccircle cx='40' cy='15' r='10'/%3E%3Ccircle cx='60' cy='15' r='10'/%3E%3Ccircle cx='80' cy='25' r='10'/%3E%3C/svg%3E"),
+        linear-gradient(135deg, rgba(248, 247, 244, 0.2), rgba(229, 140, 66, 0.1));
+    background-size: 150px, auto;
 }
 
 .hero__title {
@@ -162,6 +170,31 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 800;
     margin-bottom: 1rem;
     animation: fadeInUp 0.8s 0.2s both ease-out;
+    /* Use flexbox to align the title with new icons */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+/* Add paw icons before and after the title */
+.hero__title::before,
+.hero__title::after {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    background-color: var(--color-primary);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg' fill='black'%3E%3Ccircle cx='50' cy='65' r='25'/%3E%3Ccircle cx='20' cy='25' r='10'/%3E%3Ccircle cx='40' cy='15' r='10'/%3E%3Ccircle cx='60' cy='15' r='10'/%3E%3Ccircle cx='80' cy='25' r='10'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg' fill='black'%3E%3Ccircle cx='50' cy='65' r='25'/%3E%3Ccircle cx='20' cy='25' r='10'/%3E%3Ccircle cx='40' cy='15' r='10'/%3E%3Ccircle cx='60' cy='15' r='10'/%3E%3Ccircle cx='80' cy='25' r='10'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    animation: paw-enter 0.8s 0.5s both ease-out;
+}
+
+.hero__title::after {
+    animation-delay: 0.6s; /* Stagger the second paw */
 }
 
 .hero__subtitle {
@@ -228,11 +261,18 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: center;
     gap: 1rem;
 }
+.profile-block__socials a {
+    display: inline-block;
+    transition: transform 0.2s ease-out;
+}
 .profile-block__socials img {
     width: 24px;
     height: 24px;
     opacity: 0.7;
     transition: opacity 0.2s ease;
+}
+.profile-block__socials a:hover {
+    transform: scale(1.2);
 }
 .profile-block__socials a:hover img {
     opacity: 1;
@@ -435,14 +475,19 @@ h1, h2, h3, h4, h5, h6 {
     gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
-
+.footer-socials a {
+    display: inline-block;
+    transition: transform 0.2s ease-out;
+}
 .footer-socials img {
     width: 24px;
     height: 24px;
     opacity: 0.6;
     transition: opacity 0.2s ease;
 }
-
+.footer-socials a:hover {
+    transform: scale(1.2);
+}
 .footer-socials a:hover img {
     opacity: 1;
 }
@@ -599,6 +644,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 .product-card {
     animation: card-enter 0.5s ease-out both;
+}
+
+@keyframes paw-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 @keyframes mm-fadeIn {
