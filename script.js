@@ -78,7 +78,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (allProducts.length === 0) { grid.innerHTML = '<p>No products found. Your sheet might be empty or the format is unreadable.</p>'; return; }
         const filtered = allProducts.filter(p => (filter === 'all' || (p.category && p.category.toLowerCase() === filter.toLowerCase())) && (p.title && p.title.toLowerCase().includes(query.toLowerCase())));
         if (filtered.length === 0) { grid.innerHTML = '<p>No products match your search.</p>'; return; }
-        grid.innerHTML = filtered.map(product => `<a href="${product.url}" target="_blank" class="card"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div><div class="btn">View on ${product.store || 'Store'}</div></div></a>`).join('');
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        grid.innerHTML = filtered.map(product => {
+            let productUrl = product.url;
+            // For mobile users, clean Amazon URLs to improve chances of opening in the app.
+            if (isMobile && productUrl && productUrl.includes('amazon.in')) {
+                const asinMatch = productUrl.match(/\/dp\/([A-Z0-9]{10})/);
+                if (asinMatch && asinMatch[1]) {
+                    // Reconstruct a minimal, clean URL. This is more likely to be handled
+                    // correctly by the mobile OS's universal link feature.
+                    productUrl = `https://www.amazon.in/dp/${asinMatch[1]}`;
+                }
+            }
+            return `<a href="${productUrl}" target="_blank" class="card"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div><div class="btn">View on ${product.store || 'Store'}</div></div></a>`;
+        }).join('');
     }
     function renderUI() {
         // --- WhatsApp & Collab Button ---
