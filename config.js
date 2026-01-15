@@ -12,42 +12,31 @@ const config = {
         { name: 'WhatsApp', url: 'https://api.whatsapp.com/send?phone=919336536492', icon: 'images/icons/whatsapp.svg' },
         { name: 'Amazon', url: 'https://www.amazon.in/shop/bella_and_bagheera', icon: 'images/icons/amazon.svg' }
     ],
+    // Categories for the filter chips. The 'id' should match the 'category' in your Google Sheet.
     categories: [
         { id: 'Cat-Bedding', name: 'Cat Bedding' },
         { id: 'home', name: 'Home' },
         { id: 'tech', name: 'Tech' }
     ],
-    products: [
-        {
-            category: 'Cat-Bedding',
-            image: "https://m.media-amazon.com/images/I/612h+CVqLoL._SX522_.jpg",
-            title: "Cave Scratcher Cat House",
-            url: "https://amzn.to/49m4Xx7",
-            store: "Amazon"
-        },
-        {
-            category: 'Cat-Bedding',
-            image: "https://m.media-amazon.com/images/I/71tuTXEji4L._SX679_.jpg",
-            title: "Cactus Theme Cat Tree",
-            url: "https://amzn.to/4jPnEwQ",
-            store: "Amazon"
-        },
-                 {
-                     category: 'Cat-Bedding',
-                     image: "https://m.media-amazon.com/images/I/71kG0KRofQL._SX679_.jpg",
-                     title: "Multistory Cat Tree with Condos, Perches and Sctraching Post",
-                     url: "https://amzn.to/49VqPzq",
-                     store: "Amazon"
-                 }
-        ,
-                         {
-                             category: 'Cat-Bedding',
-                             image: "https://m.media-amazon.com/images/I/61gTOQJrkpL._SX522_.jpg",
-                             title: "Trampoline Cat Bed",
-                             url: "https://amzn.to/49RbgsF",
-                             store: "Amazon"
-                         }
 
+    // Google Sheets sources.
+    // 1. In Google Sheets, go to File > Share > Publish to web.
+    // 2. Publish the specific sheet (e.g., 'Cat-Bedding') as a Comma-separated values (.csv) file.
+    // 3. Copy the generated URL and paste it here.
+    googleSheetSources: [
+        {
+            category: 'Cat-Bedding',
+            url: 'https://docs.google.com/spreadsheets/d/10WAnoS6FqvHCk7tLRGpTw9h4RUSmCQpVAKtsfp0Gyi4/edit?usp=sharing'
+        },
+        {
+            category: 'home',
+            url: 'https://docs.google.com/spreadsheets/d/10WAnoS6FqvHCk7tLRGpTw9h4RUSmCQpVAKtsfp0Gyi4/edit?usp=sharing'
+        },
+        {
+            category: 'tech',
+            url: 'https://docs.google.com/spreadsheets/d/10WAnoS6FqvHCk7tLRGpTw9h4RUSmCQpVAKtsfp0Gyi4/edit?usp=sharing'
+        }
     ],
+
     footerText: "© {year} Bella, Nawaab & Bagheera"
 };
