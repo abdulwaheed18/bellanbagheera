@@ -72,36 +72,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 2. UI RENDERING ---
+
+    /**
+     * Creates a clean product URL. For mobile Amazon links, it creates a minimal URL
+     * to improve the chances of it opening in the native app.
+     * @param {object} product The product object.
+     * @returns {string} The cleaned URL.
+     */
+    function getCleanProductUrl(product) {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile && product.url && product.url.includes('amazon.in')) {
+            const asinMatch = product.url.match(/\/dp\/([A-Z0-9]{10})/);
+            if (asinMatch && asinMatch[1]) {
+                return `https://www.amazon.in/dp/${asinMatch[1]}`;
+            }
+        }
+        return product.url;
+    }
+
     function getSocialsHTML() { return config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join(''); }
     function renderProducts(filter = 'all', query = '') {
         if (fetchErrors.length > 0) { grid.innerHTML = `<div class="error-box"><h3>Failed to Load Products</h3><ul>${fetchErrors.map(err => `<li>${err}</li>`).join('')}</ul></div>`; return; }
         if (allProducts.length === 0) { grid.innerHTML = '<p>No products found. Your sheet might be empty or the format is unreadable.</p>'; return; }
         const filtered = allProducts.filter(p => (filter === 'all' || (p.category && p.category.toLowerCase() === filter.toLowerCase())) && (p.title && p.title.toLowerCase().includes(query.toLowerCase())));
         if (filtered.length === 0) { grid.innerHTML = '<p>No products match your search.</p>'; return; }
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        grid.innerHTML = filtered.map(product => {
-            let productUrl = product.url;
-            // For mobile users, clean Amazon URLs to improve chances of opening in the app.
-            if (isMobile && productUrl && productUrl.includes('amazon.in')) {
-                const asinMatch = productUrl.match(/\/dp\/([A-Z0-9]{10})/);
-                if (asinMatch && asinMatch[1]) {
-                    // Reconstruct a minimal, clean URL. This is more likely to be handled
-                    // correctly by the mobile OS's universal link feature.
-                    productUrl = `https://www.amazon.in/dp/${asinMatch[1]}`;
-                }
+        grid.innerHTML = filtered.map((product, index) => {
+            const productUrl = getCleanProductUrl(product);
+            const storeName = product.store || 'Store';
+            let buttonHTML;
+
+            if (storeName.toLowerCase() === 'amazon') {
+                buttonHTML = `<div class="btn btn-amazon">View on Amazon</div>`;
+            } else {
+                buttonHTML = `<div class="btn">View on ${storeName}</div>`;
             }
 
-        const storeName = product.store || 'Store';
-        let buttonHTML;
-
-        if (storeName.toLowerCase() === 'amazon') {
-            // A less bulky, outline-style button for Amazon products.
-            buttonHTML = `<div class="btn btn-amazon">View on Amazon</div>`;
-        } else {
-            buttonHTML = `<div class="btn">View on ${storeName}</div>`;
-        }
-
-        return `<a href="${productUrl}" target="_blank" class="card"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div>${buttonHTML}</div></a>`;
+            return `<a href="${productUrl}" target="_blank" class="card" style="animation-delay: ${index * 50}ms"><img src="${product.image}" alt="${product.title}"><div class="card-content"><div class="card-title">${product.title}</div>${buttonHTML}</div></a>`;
         }).join('');
     }
     function renderUI() {
@@ -119,8 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </a>`;
         }
 
+        const socialsHTML = getSocialsHTML();
+
         document.title = `${config.profile.name} | Links`;
-        header.innerHTML = `<img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar"><h1>${config.profile.name}</h1><p>${config.profile.bio.replace(/\n/g, '<br />')}</p>${collabButtonHTML}<div class="social-links">${getSocialsHTML()}</div>`;
+        header.innerHTML = `<img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar"><h1>${config.profile.name}</h1><p>${config.profile.bio.replace(/\n/g, '<br />')}</p>${collabButtonHTML}<div class="social-links">${socialsHTML}</div>`;
         const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
         const optionsHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
         filterContainer.innerHTML = `
@@ -132,9 +140,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 </select>
             </div>`;
         const disclosureHTML = config.affiliateDisclosure ? `<p class="affiliate-disclosure">${config.affiliateDisclosure}</p>` : '';
-        footer.innerHTML = `${disclosureHTML}<div class="footer-socials">${getSocialsHTML()}</div><p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
+        footer.innerHTML = `${disclosureHTML}<div class="footer-socials">${socialsHTML}</div><p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
         renderProducts();
         feather.replace();
+    }
+
+    /**
+     * Creates a trail of paw prints that follow the cursor.
+     */
+    function initPawCursor() {
+        const pawIconUrl = 'images/icons/paw.svg';
+        let lastX = -100;
+        let lastY = -100;
+
+        window.addEventListener('mousemove', e => {
+            const distance = Math.sqrt(Math.pow(e.pageX - lastX, 2) + Math.pow(e.pageY - lastY, 2));
+            if (distance < 50) return; // Throttle paw creation
+
+            lastX = e.pageX;
+            lastY = e.pageY;
+
+            const paw = document.createElement('img');
+            paw.setAttribute('src', pawIconUrl);
+            paw.classList.add('paw-trail');
+            paw.style.left = `${e.pageX - 15}px`;
+            paw.style.top = `${e.pageY - 15}px`;
+            document.body.appendChild(paw);
+
+            setTimeout(() => {
+                paw.style.opacity = '0';
+                paw.style.transform = 'scale(0.5) rotate(30deg)';
+                setTimeout(() => paw.remove(), 600); // Remove from DOM after transition
+            }, 100);
+        });
     }
 
     // --- 3. INITIALIZATION ---
@@ -149,6 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
         categorySelect.addEventListener('change', e => renderProducts(e.target.value, searchInput.value));
 
         document.getElementById('theme-toggle').addEventListener('click', () => { const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); feather.replace(); });
+
+        initPawCursor();
     }
     init();
 });

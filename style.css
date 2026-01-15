@@ -4,6 +4,7 @@
     --text-primary: #ffffff;
     --text-secondary: #94a3b8;
     --accent-color: #fb923c;
+    --accent-color-translucent: hsla(32, 96%, 61%, 0.1);
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.08);
     --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
@@ -14,6 +15,7 @@
     --bg-accent: #ffffff;
     --text-primary: #0f172a;
     --text-secondary: #64748b;
+    --accent-color-translucent: hsla(32, 96%, 61%, 0.1);
     --glass-bg: rgba(0, 0, 0, 0.02);
     --glass-border: rgba(0, 0, 0, 0.08);
     --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
@@ -35,7 +37,25 @@ body {
 
 .header {
     text-align: center;
-    padding: 80px 20px 40px; /* Reduced top padding to account for fixed nav */
+    padding: 80px 20px 40px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, var(--accent-color-translucent) 0%, transparent 60%);
+    transform: translate(-50%, -50%);
+    animation: pulse-glow 12s infinite alternate ease-in-out;
+    z-index: -1;
+    will-change: transform, opacity;
 }
 
 .site-title {
@@ -85,12 +105,12 @@ body {
 .social-links a, .footer-socials a {
     color: var(--text-secondary);
     display: inline-block; /* Ensures transform works correctly */
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .social-links a:hover, .footer-socials a:hover {
     transform: translateY(-5px);
-    color: var(--accent-color);
+    opacity: 0.8;
 }
 
 .search-container {
@@ -118,6 +138,8 @@ body {
     align-items: center;
     gap: 10px;
     margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out 0.2s forwards;
 }
 
 .category-label {
@@ -159,6 +181,8 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 20px;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out 0.3s forwards;
 }
 
 .card {
@@ -169,6 +193,10 @@ body {
     transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: card-appear 0.5s ease-out forwards;
+    will-change: transform, opacity;
 }
 
 .card:hover { transform: translateY(-10px); }
@@ -198,6 +226,10 @@ body {
     text-align: center;
     margin-top: 15px;
 }
+.btn:active, #theme-toggle:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
 
 .btn.btn-amazon {
     background: transparent;
@@ -226,6 +258,11 @@ body {
     max-width: 400px;
     transition: all 0.3s ease;
     text-align: left;
+}
+
+.collab-button:active {
+    transform: translateY(0) scale(0.97);
+    transition: transform 0.1s ease;
 }
 
 .collab-button:hover {
@@ -275,6 +312,16 @@ body {
 .error-box h3 { margin-top: 0; }
 .error-box ul { padding-left: 20px; }
 
+.paw-trail {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
 /* --- Mobile-Specific Adjustments --- */
 @media (max-width: 600px) {
     .header {
@@ -293,5 +340,31 @@ body {
 
     #product-search {
         width: 100%; /* Makes the input field expand fully */
+    }
+}
+
+/* --- Animations --- */
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes card-appear {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse-glow {
+    from {
+        opacity: 0.2;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 0.4;
+        transform: translate(-50%, -50%) scale(1.1);
     }
 }
