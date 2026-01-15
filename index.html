@@ -8,29 +8,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://unpkg.com/micromodal-slide/dist/micromodal.css">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
 
-<div class="top-nav">
-    <div class="search-container">
-        <i data-feather="search" class="search-icon"></i>
-        <input type="text" id="product-search" placeholder="Search cat gear...">
+<header class="header">
+    <div class="container header__container">
+        <a href="#" class="logo" id="logo-text">CatCouture</a>
+        <div class="search-container">
+            <i data-feather="search" class="search-icon"></i>
+            <input type="text" id="product-search" placeholder="Search for stylish cat gear...">
+        </div>
+        <div class="header__actions">
+            <button id="theme-toggle" aria-label="Switch theme">
+                <i data-feather="moon"></i>
+            </button>
+        </div>
     </div>
-    <button id="theme-toggle" aria-label="Switch theme">
-        <i data-feather="moon"></i>
-    </button>
-</div>
+</header>
 
-<header class="header"></header>
+<main>
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero__title" id="hero-title">Design for the discerning feline.</h1>
+            <p class="hero__subtitle" id="hero-subtitle">Explore our collection of handcrafted accessories for your stylish companion.</p>
+        </div>
+    </section>
 
-<main class="container">
-    <div class="filter-section"></div>
-    <div class="grid" id="product-grid"></div>
+    <div class="container main-layout">
+        <aside class="filter-section">
+            <div id="profile-container"></div>
+            <div id="category-filter-container"></div>
+        </aside>
+        <section class="product-grid-section">
+            <div class="grid" id="product-grid">
+                <div class="loader-container">
+                    <div class="loader"></div>
+                    <p>Fetching favorite finds...</p>
+                </div>
+            </div>
+        </section>
+    </div>
 </main>
 
-<footer class="footer"></footer>
+<footer class="footer">
+    <div class="container">
+        <div id="footer-content"></div>
+    </div>
+</footer>
+
+<button id="back-to-top" class="back-to-top" title="Go to top">
+    <i data-feather="arrow-up"></i>
+</button>
 
 <div class="modal micromodal-slide" id="notes-modal" aria-hidden="true">
     <div class="modal__overlay" tabindex="-1" data-micromodal-close>
@@ -51,5 +80,8 @@
 <script src="config.js"></script>
 <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
 <script src="script.js"></script>
+<script>
+    feather.replace();
+</script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const grid = document.getElementById('product-grid');
     const searchInput = document.getElementById('product-search');
-    const filterContainer = document.querySelector('.filter-section');
-    const header = document.querySelector('.header');
-    const footer = document.querySelector('.footer');
+    const filterContainer = document.getElementById('category-filter-container');
+    const profileContainer = document.getElementById('profile-container');
+    const footerContainer = document.getElementById('footer-content');
 
     let allProducts = [];
     const fetchErrors = [];
@@ -36,9 +36,32 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             const mappedHeader = header.map(h => keyMap[h] || h);
 
-            const products = lines.slice(1).map(line => {
+            const products = lines.slice(1).map(line => { // Start from the line after the header
                 if (!line.trim()) return null;
-                const values = line.split(delimiter).map(v => v.trim());
+
+                // This robust parser handles commas inside quoted fields, e.g., "Note, with a comma"
+                const values = [];
+                let currentValue = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') {
+                        // Handle escaped quotes ("") by treating them as a single literal quote
+                        if (inQuotes && line[i + 1] === '"') {
+                            currentValue += '"';
+                            i++; // Skip the next character
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(currentValue.trim());
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue.trim()); // Add the final value
+
                 return mappedHeader.reduce((obj, key, index) => {
                     if (key) obj[key] = values[index];
                     return obj;
@@ -46,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }).filter(Boolean);
 
             if (products.length === 0 && fetchErrors.length === 0) {
-                fetchErrors.push("The file was fetched successfully, but no products were found after parsing. Please check the sheet's content.");
+                fetchErrors.push("The file was fetched, but no products were found after parsing. Please check the sheet's content and format.");
             }
             return products;
 
@@ -112,12 +135,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return sanitizedText.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
     }
 
-    function getSocialsHTML() { return config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join(''); }
     function renderProducts(filter = 'all', query = '') {
+        grid.classList.add('grid--loading');
+
+        // Use a short timeout to allow the loading animation to be visible
+        setTimeout(() => {
         if (fetchErrors.length > 0) { grid.innerHTML = `<div class="error-box"><h3>Failed to Load Products</h3><ul>${fetchErrors.map(err => `<li>${err}</li>`).join('')}</ul></div>`; return; }
         if (allProducts.length === 0) { grid.innerHTML = '<p>No products found. Your sheet might be empty or the format is unreadable.</p>'; return; }
-        const filtered = allProducts.filter(p => (filter === 'all' || (p.category && p.category.toLowerCase() === filter.toLowerCase())) && (p.title && p.title.toLowerCase().includes(query.toLowerCase())));
-        if (filtered.length === 0) { grid.innerHTML = '<p>No products match your search.</p>'; return; }
+        const lowerCaseQuery = query.toLowerCase();
+        const filtered = allProducts.filter(p => (filter === 'all' || (p.category && p.category.toLowerCase() === filter.toLowerCase())) && (p.title && p.title.toLowerCase().includes(lowerCaseQuery)));
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div class="empty-state"><i data-feather="frown"></i><p>No products match your search.</p></div>`;
+            grid.classList.remove('grid--loading');
+            feather.replace(); // Render the new icon
+            return;
+        }
         grid.innerHTML = filtered.map((product, index) => {
             const productUrl = getCleanProductUrl(product);
             const storeName = product.store || 'Store';
@@ -126,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalIndex = allProducts.findIndex(p => p === product);
             const notesHTML = product.notes
                 ? `<button class="notes-trigger" data-product-index="${originalIndex}">
-                       <i data-feather="file-text"></i> Read Notes
+                       <i data-feather="eye"></i> Details
                    </button>`
                 : '';
 
@@ -138,51 +170,92 @@ document.addEventListener('DOMContentLoaded', function() {
                 buttonHTML = `<a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="btn">View on ${storeName}</a>`;
             }
 
-            return `<div class="card" style="animation-delay: ${index * 50}ms">
-                        <a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="card-image-link">
-                            <img src="${product.image}" alt="${product.title}">
+            return `<div class="product-card" style="animation-delay: ${index * 50}ms">
+                        <a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="product-card__image-link">
+                            <img class="product-card__image" src="${product.image}" alt="${product.title}" loading="lazy">
                         </a>
-                        <div class="card-content">
-                            <div class="card-title">${product.title}</div>
+                        <div class="product-card__info">
+                            <h3 class="product-card__title">${product.title}</h3>
                         </div>
-                        <div class="card-actions">${notesHTML}</div>
-                        <div class="card-footer">${buttonHTML}</div>
+                        <div class="product-card__actions">
+                            ${notesHTML}
+                            ${buttonHTML}
+                        </div>
                     </div>`;
         }).join('');
+        grid.classList.remove('grid--loading');
+        feather.replace();
+        }, 200); // 200ms delay
     }
-    function renderUI() {
-        // --- WhatsApp & Collab Button ---
-        const whatsAppSocial = config.socials.find(s => s.name.toLowerCase() === 'whatsapp');
-        let collabButtonHTML = '';
-        if (whatsAppSocial) {
-            collabButtonHTML = `
-                <a href="${whatsAppSocial.url}" target="_blank" rel="noopener noreferrer" class="collab-button">
-                    <img src="${whatsAppSocial.icon}" alt="WhatsApp Icon" class="whatsapp-icon">
-                    <div>
-                        <strong>Quick Connect for Collabs</strong>
-                        <span>Messages only, no calls please.</span>
-                    </div>
-                </a>`;
+
+    function renderProfile() {
+        if (!profileContainer) return;
+        const socialsHTML = config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join('');
+        profileContainer.innerHTML = `
+            <div class="profile-block">
+                <img class="profile-block__avatar" src="${config.profile.avatar}" alt="Avatar">
+                <h2 class="profile-block__name">${config.profile.name}</h2>
+                <p class="profile-block__bio">${config.profile.bio.replace(/\n/g, '<br />')}</p>
+                <div class="profile-block__socials">${socialsHTML}</div>
+            </div>
+        `;
+    }
+
+    function renderHero() {
+        const heroTitle = document.getElementById('hero-title');
+        const heroSubtitle = document.getElementById('hero-subtitle');
+        const searchInput = document.getElementById('product-search');
+
+        if (config.hero) {
+            if (heroTitle && config.hero.title) {
+                heroTitle.textContent = config.hero.title;
+            }
+            if (heroSubtitle && config.hero.subtitle) {
+                heroSubtitle.textContent = config.hero.subtitle;
+            }
         }
+        // Also update search placeholder for consistency
+        if (searchInput) {
+            searchInput.placeholder = "Search our favorite finds...";
+        }
+    }
 
-        const socialsHTML = getSocialsHTML();
-
-        document.title = `${config.profile.name} | Links`;
-        header.innerHTML = `<img class="profile-avatar" src="${config.profile.avatar}" alt="Avatar"><h1>${config.profile.name}</h1><p>${config.profile.bio.replace(/\n/g, '<br />')}</p>${collabButtonHTML}<div class="social-links">${socialsHTML}</div>`;
+    function renderFilters() {
+        if (!filterContainer) return;
         const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
         const optionsHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
         filterContainer.innerHTML = `
-            <label for="category-select" class="category-label">Category:</label>
-            <div class="select-wrapper">
-                <select id="category-select">
-                    <option value="all">All Categories</option>
-                    ${optionsHTML}
-                </select>
+            <div class="category-filter">
+                <label for="category-select">Filter by Category</label>
+                <div class="select-wrapper">
+                    <select id="category-select">
+                        <option value="all">All Categories</option>
+                        ${optionsHTML}
+                    </select>
+                </div>
             </div>`;
+    }
+
+    function renderFooter() {
+        if (!footerContainer) return;
+        const socialsHTML = config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join('');
         const disclosureHTML = config.affiliateDisclosure ? `<p class="affiliate-disclosure">${config.affiliateDisclosure}</p>` : '';
-        footer.innerHTML = `${disclosureHTML}<div class="footer-socials">${socialsHTML}</div><p>${config.footerText.replace('{year}', new Date().getFullYear())}</p>`;
+        const footerTextHTML = config.footerText ? `<p class="footer-copyright">${config.footerText.replace('{year}', new Date().getFullYear())}</p>` : '';
+        footerContainer.innerHTML = `${disclosureHTML}<div class="footer-socials">${socialsHTML}</div>${footerTextHTML}`;
+    }
+
+    function renderUI() {
+        document.title = `${config.profile.name} | Links`;
+        const logoElement = document.getElementById('logo-text');
+        if (logoElement) {
+            logoElement.textContent = config.profile.logoName || config.profile.name;
+        }
+
+        renderHero();
+        renderProfile();
+        renderFilters();
+        renderFooter();
         renderProducts();
-        feather.replace();
     }
 
     /**
@@ -215,23 +288,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    /**
+     * Initializes the "Back to Top" button functionality.
+     */
+    function initBackToTopButton() {
+        const backToTopButton = document.getElementById('back-to-top');
+        if (!backToTopButton) return;
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+
+        backToTopButton.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
     // --- 3. INITIALIZATION ---
     const themeToggleButton = document.getElementById('theme-toggle');
 
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        themeToggleButton.innerHTML = theme === 'dark' ? '<i data-feather="moon"></i>' : '<i data-feather="sun"></i>';
+        themeToggleButton.innerHTML = theme === 'dark' ? '<i data-feather="sun"></i>' : '<i data-feather="moon"></i>';
         // Redraw all feather icons on the page to apply color changes
         feather.replace();
     }
 
     async function init() {
         // Set initial theme and icon
-        applyTheme(localStorage.getItem('theme') || 'dark');
+        applyTheme(localStorage.getItem('theme') || 'light');
 
         await loadAllProducts();
-        // Render UI without calling feather.replace() again, as applyTheme handles it
-        renderUI(); 
+        renderUI();
 
         const categorySelect = document.getElementById('category-select');
 
@@ -266,6 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
             awaitCloseAnimation: true
         });
         initPawCursor();
+        initBackToTopButton();
     }
     init();
 });

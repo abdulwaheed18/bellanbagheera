@@ -2,7 +2,12 @@ const config = {
     profile: {
         name: "Bella Nawaab & Bagheera",
         bio: "Hi friends, we're Bella, Nawaab & Bagheera! 🐾 Our humans spoil us with the best toys and treats, and we've convinced them to share all our favorite things with you. Pounce on our top picks below! 😻",
-        avatar: "images/profile_avatar.png"
+        avatar: "images/profile_avatar.png",
+        logoName: "Bella & Co."
+    },
+    hero: {
+        title: "Our Favorite Finds",
+        subtitle: "A curated collection of toys, treats, and treasures we absolutely adore. Hand-picked for the most discerning pets."
     },
     socials: [
         { name: 'Instagram', url: 'https://instagram.com/bella_and_bagheera', icon: 'images/icons/instagram.svg' },
