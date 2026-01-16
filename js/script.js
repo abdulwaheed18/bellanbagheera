@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const keyMap = {
                 'title': 'title',
+                'name': 'title', // Also recognize 'name' column and map it to 'title'
                 'product url': 'url',
                 'image url': 'image',
                 'store': 'store',
