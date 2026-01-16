@@ -321,6 +321,14 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     gap: 0.5rem;
     padding: 0 1.25rem 1.25rem;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.product-card:hover .product-card__actions {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .btn, .notes-trigger {
