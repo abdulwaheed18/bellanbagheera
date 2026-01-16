@@ -248,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="all">All Categories</option>
                         ${optionsHTML}
                     </select>
+                    <i data-feather="chevron-down"></i>
                 </div>
             </div>`;
     }
