@@ -239,23 +239,22 @@ h1, h2, h3, h4, h5, h6 {
 .profile-block__socials {
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.25rem;
+    flex-wrap: wrap;
 }
 .profile-block__socials a {
-    display: inline-block;
-    transition: transform 0.2s ease-out;
-}
-.profile-block__socials img {
-    width: 24px;
-    height: 24px;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
+    color: var(--color-muted);
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 .profile-block__socials a:hover {
-    transform: scale(1.2);
+    color: var(--color-primary);
+    transform: scale(1.1);
 }
-.profile-block__socials a:hover img {
-    opacity: 1;
+
+.social-icon-svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
 }
 
 /* --- Category Filter (in Sidebar) --- */
@@ -741,6 +740,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 /* Custom Select Dropdown
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
 .select-wrapper {
 	position: relative;
 	display: inline-block
@@ -783,18 +791,16 @@ h1, h2, h3, h4, h5, h6 {
 	height: 20px
 }
 
-.sort-container {
+.sort-container, .category-filter {
 	display: flex;
 	align-items: center;
 	gap: .75rem;
-	justify-content: flex-end;
-	margin-bottom: 1.5rem
 }
 
-.sort-container label {
+.sort-container label, .category-filter label {
 	font-weight: 600
 }
 
 .category-filter .select-wrapper {
-	width: 100%
+	width: 200px;
 }

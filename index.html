@@ -44,20 +44,22 @@
     <div class="container main-layout">
         <aside class="filter-section">
             <div id="profile-container"></div>
-            <div id="category-filter-container"></div>
         </aside>
         <section class="product-grid-section">
-            <div class="sort-container">
-                <label for="sort-select">Sort by:</label>
-                <div class="select-wrapper">
-                    <select id="sort-select">
-                        <option value="default">Featured</option>
-                        <option value="price-asc">Price: Low to High</option>
-                        <option value="price-desc">Price: High to Low</option>
-                        <option value="name-asc">Name: A-Z</option>
-                        <option value="name-desc">Name: Z-A</option>
-                    </select>
-                    <i data-feather="chevron-down"></i>
+            <div class="controls-container">
+                <div id="category-filter-container"></div>
+                <div class="sort-container">
+                    <label for="sort-select">Sort by:</label>
+                    <div class="select-wrapper">
+                        <select id="sort-select">
+                            <option value="default">Featured</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="name-asc">Name: A-Z</option>
+                            <option value="name-desc">Name: Z-A</option>
+                        </select>
+                        <i data-feather="chevron-down"></i>
+                    </div>
                 </div>
             </div>
             <div class="grid" id="product-grid">

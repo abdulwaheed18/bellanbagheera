@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function parseCSV(text) {
         try {
             // Correctly split by newline characters (\n) or carriage return + newline (\r\n).
-            // This was the source of the bug.
             const lines = text.trim().split(/\r?\n/);
 
             if (lines.length < 2) {
@@ -206,7 +205,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderProfile() {
         if (!profileContainer) return;
-        const socialsHTML = config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join('');
+        const socialsHTML = config.socials.map(social => {
+            return `<a href="${social.url}" target="_blank" rel="noopener noreferrer" aria-label="${social.name}"><img src="${social.icon}" class="social-icon-svg" alt="${social.name}"></a>`;
+        }).join('');
+
         profileContainer.innerHTML = `
             <div class="profile-block">
                 <img class="profile-block__avatar" src="${config.profile.avatar}" alt="Avatar">
@@ -258,20 +260,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const logoName = config.profile.logoName || config.profile.name;
 
-        const socialIcons = {
-            'instagram': 'instagram',
-            'threads': 'message-square',
-            'youtube': 'youtube',
-            'facebook': 'facebook',
-            'whatsapp': 'message-circle',
-            'amazon': 'shopping-cart',
-            'twitter': 'twitter',
-            'email': 'mail'
-        };
-
         const socialsListHTML = config.socials.map(social => {
-            const iconName = socialIcons[social.name.toLowerCase()] || 'link';
-            return `<a href="${social.url}" target="_blank" rel="noopener noreferrer" aria-label="${social.name}"><i data-feather="${iconName}"></i></a>`;
+            return `<a href="${social.url}" target="_blank" rel="noopener noreferrer" aria-label="${social.name}"><img src="${social.icon}" class="social-icon-svg" alt="${social.name}"></a>`;
         }).join('');
 
         const brandHTML = `
