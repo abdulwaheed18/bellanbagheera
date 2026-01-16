@@ -47,6 +47,16 @@
             <div id="category-filter-container"></div>
         </aside>
         <section class="product-grid-section">
+            <div class="sort-container">
+                <label for="sort-select">Sort by:</label>
+                <select id="sort-select">
+                    <option value="default">Featured</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="name-asc">Name: A-Z</option>
+                    <option value="name-desc">Name: Z-A</option>
+                </select>
+            </div>
             <div class="grid" id="product-grid">
                 <div class="loader-container">
                     <div class="loader"></div>
@@ -56,7 +66,6 @@
         </section>
     </div>
 </main>
-
 <footer class="footer">
     <div class="container">
         <div id="footer-content"></div>

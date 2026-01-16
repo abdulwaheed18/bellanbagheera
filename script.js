@@ -32,7 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'image url': 'image',
                 'store': 'store',
                 'category': 'category',
-                'notes': 'notes'
+                'notes': 'notes',
+                'price': 'price'
             };
             const mappedHeader = header.map(h => keyMap[h] || h);
 
@@ -88,7 +89,14 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(config.googleSheetUrl);
             if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
-            allProducts = parseCSV(await response.text());
+            const parsedProducts = parseCSV(await response.text());
+
+            // Process and store products, ensuring price is a number for correct sorting
+            allProducts = parsedProducts.map(product => ({
+                ...product,
+                price: product.price ? parseFloat(String(product.price).replace(/[^0-9.-]+/g, "")) : 0
+            }));
+
         } catch (error) {
             console.error(`Error fetching from ${config.googleSheetUrl}:`, error);
             fetchErrors.push("Could not load products. Check the URL and ensure the sheet is published correctly.");
@@ -135,22 +143,26 @@ document.addEventListener('DOMContentLoaded', function() {
         return sanitizedText.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
     }
 
-    function renderProducts(filter = 'all', query = '') {
+    function renderProducts(productsToRender) {
         grid.classList.add('grid--loading');
 
         // Use a short timeout to allow the loading animation to be visible
         setTimeout(() => {
         if (fetchErrors.length > 0) { grid.innerHTML = `<div class="error-box"><h3>Failed to Load Products</h3><ul>${fetchErrors.map(err => `<li>${err}</li>`).join('')}</ul></div>`; return; }
-        if (allProducts.length === 0) { grid.innerHTML = '<p>No products found. Your sheet might be empty or the format is unreadable.</p>'; return; }
-        const lowerCaseQuery = query.toLowerCase();
-        const filtered = allProducts.filter(p => (filter === 'all' || (p.category && p.category.toLowerCase() === filter.toLowerCase())) && (p.title && p.title.toLowerCase().includes(lowerCaseQuery)));
-        if (filtered.length === 0) {
+        // Check allProducts for the initial empty state message
+        if (allProducts.length === 0) { 
+            grid.innerHTML = '<p>No products found. Your sheet might be empty or the format is unreadable.</p>'; 
+            grid.classList.remove('grid--loading');
+            return; 
+        }
+
+        if (productsToRender.length === 0) {
             grid.innerHTML = `<div class="empty-state"><i data-feather="frown"></i><p>No products match your search.</p></div>`;
             grid.classList.remove('grid--loading');
             feather.replace(); // Render the new icon
             return;
         }
-        grid.innerHTML = filtered.map((product, index) => {
+        grid.innerHTML = productsToRender.map((product, index) => {
             const productUrl = getCleanProductUrl(product);
             const storeName = product.store || 'Store';
 
@@ -170,12 +182,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 buttonHTML = `<a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="btn">View on ${storeName}</a>`;
             }
 
+            const priceHTML = product.price > 0 ? `<p class="product-card__price">₹${product.price.toFixed(2)}</p>` : '';
+
             return `<div class="product-card" style="animation-delay: ${index * 50}ms">
                         <a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="product-card__image-link">
                             <img class="product-card__image" src="${product.image}" alt="${product.title}" loading="lazy">
                         </a>
                         <div class="product-card__info">
                             <h3 class="product-card__title">${product.title}</h3>
+                            ${priceHTML}
                         </div>
                         <div class="product-card__actions">
                             ${notesHTML}
@@ -255,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderProfile();
         renderFilters();
         renderFooter();
-        renderProducts();
     }
 
     /**
@@ -327,10 +341,46 @@ document.addEventListener('DOMContentLoaded', function() {
         renderUI();
 
         const categorySelect = document.getElementById('category-select');
+        const sortSelect = document.getElementById('sort-select');
 
-        searchInput.addEventListener('input', e => renderProducts(categorySelect.value, e.target.value));
-        categorySelect.addEventListener('change', e => renderProducts(e.target.value, searchInput.value));
+        function updateView() {
+            const category = categorySelect.value;
+            const query = searchInput.value.toLowerCase();
+            const sortBy = sortSelect.value;
 
+            // 1. Filter products based on category and search query
+            let processedProducts = allProducts.filter(p =>
+                (category === 'all' || (p.category && p.category.toLowerCase() === category.toLowerCase())) &&
+                (p.title && p.title.toLowerCase().includes(query))
+            );
+
+            // 2. Sort the filtered products
+            // A copy is not strictly needed here as `filter` already creates a new array,
+            // but it's good practice if the logic changes.
+            switch (sortBy) {
+                case 'price-asc':
+                    processedProducts.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-desc':
+                    processedProducts.sort((a, b) => b.price - a.price);
+                    break;
+                case 'name-asc':
+                    processedProducts.sort((a, b) => a.title.localeCompare(b.title));
+                    break;
+                case 'name-desc':
+                    processedProducts.sort((a, b) => b.title.localeCompare(a.title));
+                    break;
+                // 'default' case does nothing, preserving the original sheet order from the filtered list.
+            }
+
+            // 3. Render the final list of products
+            renderProducts(processedProducts);
+        }
+
+        // Attach event listeners to all controls
+        searchInput.addEventListener('input', updateView);
+        categorySelect.addEventListener('change', updateView);
+        sortSelect.addEventListener('change', updateView);
         // Event delegation for the notes modal trigger
         grid.addEventListener('click', e => {
             const notesButton = e.target.closest('.notes-trigger');
@@ -356,6 +406,9 @@ document.addEventListener('DOMContentLoaded', function() {
         initPawCursor();
         initBackToTopButton();
         initHeaderScroll();
+
+        // Perform the initial render
+        updateView();
     }
     init();
 });
