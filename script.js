@@ -321,19 +321,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 3. INITIALIZATION ---
-    const themeToggleButton = document.getElementById('theme-toggle');
-
-    function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        themeToggleButton.innerHTML = theme === 'dark' ? '<i data-feather="sun"></i>' : '<i data-feather="moon"></i>';
-        // Redraw all feather icons on the page to apply color changes
-        feather.replace();
-    }
 
     async function init() {
-        // Set initial theme and icon
-        applyTheme(localStorage.getItem('theme') || 'light');
-
         await loadAllProducts();
         renderUI();
 
@@ -359,11 +348,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
-        });
         MicroModal.init({
             onClose: () => feather.replace(), // Redraw icons in main page if needed
             disableScroll: true,
