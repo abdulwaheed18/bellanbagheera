@@ -255,10 +255,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderFooter() {
         if (!footerContainer) return;
-        const socialsHTML = config.socials.map(social => `<a href="${social.url}" target="_blank" aria-label="${social.name}"><img src="${social.icon}" alt="${social.name}"></a>`).join('');
+
+        const logoName = config.profile.logoName || config.profile.name;
+
+        const socialIcons = {
+            'instagram': 'instagram',
+            'threads': 'message-square',
+            'youtube': 'youtube',
+            'facebook': 'facebook',
+            'whatsapp': 'message-circle',
+            'amazon': 'shopping-cart',
+            'twitter': 'twitter',
+            'email': 'mail'
+        };
+
+        const socialsListHTML = config.socials.map(social => {
+            const iconName = socialIcons[social.name.toLowerCase()] || 'link';
+            return `<a href="${social.url}" target="_blank" rel="noopener noreferrer" aria-label="${social.name}"><i data-feather="${iconName}"></i></a>`;
+        }).join('');
+
+        const brandHTML = `
+            <div class="footer-column footer-brand">
+                <h3 class="footer-logo">${logoName}</h3>
+                <p>${config.profile.bio}</p>
+                <div class="footer-social-icons">${socialsListHTML}</div>
+            </div>`;
+
+        const contactHTML = `
+            <div class="footer-column">
+                <h4 class="footer-heading">Get in Touch</h4>
+                <p class="collaboration-message">For collabs, reach out on WhatsApp (messages only).</p>
+            </div>`;
+
         const disclosureHTML = config.affiliateDisclosure ? `<p class="affiliate-disclosure">${config.affiliateDisclosure}</p>` : '';
         const footerTextHTML = config.footerText ? `<p class="footer-copyright">${config.footerText.replace('{year}', new Date().getFullYear())}</p>` : '';
-        footerContainer.innerHTML = `${disclosureHTML}<div class="footer-socials">${socialsHTML}</div>${footerTextHTML}`;
+        const bottomBarHTML = `
+            <div class="footer-bottom-bar">
+                ${footerTextHTML}
+                ${disclosureHTML}
+            </div>`;
+
+        footerContainer.innerHTML = `
+            <div class="footer-grid">
+                ${brandHTML}
+                ${contactHTML}
+            </div>
+            ${bottomBarHTML}`;
+
+        feather.replace();
     }
 
     function renderUI() {

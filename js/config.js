@@ -15,7 +15,8 @@ const config = {
         { name: 'YouTube', url: 'https://www.youtube.com/@bella_and_bagheera', icon: 'images/icons/youtube.svg' },
         { name: 'Facebook', url: 'https://www.facebook.com/bellaNbagheera', icon: 'images/icons/facebook.svg' },
         { name: 'WhatsApp', url: 'https://api.whatsapp.com/send?phone=919336536492', icon: 'images/icons/whatsapp.svg' },
-        { name: 'Amazon', url: 'https://www.amazon.in/shop/bella_and_bagheera', icon: 'images/icons/amazon.svg' }
+        { name: 'Amazon', url: 'https://www.amazon.in/shop/bella_and_bagheera', icon: 'images/icons/amazon.svg' },
+        { name: 'Email', url: 'mailto:bellanbagheera@gmail.com', icon: 'images/icons/mail.svg' }
     ],
 
     // The single source for all your products.
