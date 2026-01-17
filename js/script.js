@@ -95,7 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Process and store products, ensuring price is a number for correct sorting
             allProducts = parsedProducts.map(product => ({
                 ...product,
-                price: product.price ? parseFloat(String(product.price).replace(/[^0-9.-]+/g, "")) : 0
+                price: product.price ? parseFloat(String(product.price).replace(/[^0-9.-]+/g, "")) : 0,
+                // Split categories string into an array, trim whitespace, and remove any empty entries.
+                category: product.category ? product.category.split(',').map(c => c.trim()).filter(Boolean) : []
             }));
 
         } catch (error) {
@@ -264,11 +266,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderFilters() {
         if (!filterContainer) return;
-        const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+        // Use flatMap to get all categories from all products into a single array,
+        // then use a Set to get the unique values, and finally sort them alphabetically.
+        const allCategoryInstances = allProducts.flatMap(p => p.category || []);
+        const categories = [...new Set(allCategoryInstances)].sort();
+
         const optionsHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
         filterContainer.innerHTML = `
             <div class="category-filter">
-                <label for="category-select">Filter by Category</label>
+                <label for="category-select">Category</label>
                 <div class="select-wrapper">
                     <select id="category-select">
                         <option value="all">All Categories</option>
@@ -410,8 +416,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 1. Filter products based on category and search query
             let processedProducts = allProducts.filter(p =>
-                (category === 'all' || (p.category && p.category.toLowerCase() === category.toLowerCase())) &&
-                (p.title && p.title.toLowerCase().includes(query))
+                (category === 'all' || (p.category && p.category.includes(category))) &&
+                (p.title && p.title.toLowerCase().includes(query.trim()))
             );
 
             // 2. Sort the filtered products
