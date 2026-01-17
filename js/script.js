@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'store': 'store',
                 'category': 'category',
                 'notes': 'notes',
-                'price': 'price'
+                'price': 'price',
+                'recommendation': 'recommendation' // For BNB's Pick, etc.
             };
             const mappedHeader = header.map(h => keyMap[h] || h);
 
@@ -168,6 +169,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Find the original index of the product in the master list for stable referencing
             const originalIndex = allProducts.findIndex(p => p === product);
+
+            let recommendationBadge = '';
+            if (product.recommendation) {
+                const rec = product.recommendation.toLowerCase().trim();
+                if (rec === 'recommended') {
+                    recommendationBadge = `
+                        <div class="product-card__badge product-card__badge--recommended">
+                            <i data-feather="award"></i> BNB's Pick
+                        </div>`;
+                } else if (rec === 'ok') {
+                    recommendationBadge = `
+                        <div class="product-card__badge product-card__badge--ok">
+                            <i data-feather="thumbs-up"></i> Good Find
+                        </div>`;
+                } else if (rec === 'avoid') {
+                    recommendationBadge = `
+                        <div class="product-card__badge product-card__badge--avoid">
+                            <i data-feather="thumbs-down"></i> Not Our Fave
+                        </div>`;
+                }
+            }
+
             const notesHTML = product.notes
                 ? `<button class="notes-trigger" data-product-index="${originalIndex}">
                        <i data-feather="eye"></i> Details
@@ -185,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const priceHTML = product.price > 0 ? `<p class="product-card__price">₹${product.price.toFixed(2)}</p>` : '';
 
             return `<div class="product-card" style="animation-delay: ${index * 50}ms">
+                        ${recommendationBadge}
                         <a href="${productUrl}" target="_blank" rel="noopener noreferrer" class="product-card__image-link">
                             <img class="product-card__image" src="${product.image}" alt="${product.title}" loading="lazy">
                         </a>
@@ -427,8 +451,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const product = allProducts[productIndex];
                     if (product) {
                         document.getElementById('notes-modal-title').textContent = product.title;
-                        document.getElementById('notes-modal-content').innerHTML = linkify(product.notes);
+                        // Use the new formatter to handle rich content like images, videos, and Instagram posts
+                        document.getElementById('notes-modal-content').innerHTML = formatNotesContent(product.notes);
                         MicroModal.show('notes-modal');
+
+                        // After the modal is shown and content is injected, tell the Instagram script to process any new embeds.
+                        if (window.instgrm) {
+                            window.instgrm.Embeds.process();
+                        }
                     }
                 }
             }
