@@ -271,13 +271,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const allCategoryInstances = allProducts.flatMap(p => p.category || []);
         const categories = [...new Set(allCategoryInstances)].sort();
 
-        const optionsHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        const defaultCategory = "Top Picks";
+
+        const optionsHTML = categories.map(c =>
+            `<option value="${c}" ${c === defaultCategory ? 'selected' : ''}>${c}</option>`
+        ).join('');
         filterContainer.innerHTML = `
             <div class="category-filter">
                 <label for="category-select">Category</label>
                 <div class="select-wrapper">
                     <select id="category-select">
-                        <option value="all">All Categories</option>
                         ${optionsHTML}
                     </select>
                     <i data-feather="chevron-down"></i>
@@ -416,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 1. Filter products based on category and search query
             let processedProducts = allProducts.filter(p =>
-                (category === 'all' || (p.category && p.category.includes(category))) &&
+                (p.category && p.category.includes(category)) &&
                 (p.title && p.title.toLowerCase().includes(query.trim()))
             );
 
