@@ -394,6 +394,36 @@ h1, h2, h3, h4, h5, h6 {
     color: #fff;
 }
 
+.notes-trigger--recommended {
+    background-color: var(--color-accent); /* Sunny yellow */
+    border-color: var(--color-accent);
+    color: var(--color-text); /* Dark text on yellow */
+}
+.notes-trigger--recommended:hover {
+    filter: brightness(0.95);
+    color: var(--color-text);
+}
+
+.notes-trigger--ok {
+    background-color: var(--color-secondary); /* Cool teal */
+    border-color: var(--color-secondary);
+    color: #fff;
+}
+.notes-trigger--ok:hover {
+    filter: brightness(0.95);
+    color: #fff;
+}
+
+.notes-trigger--avoid {
+    background-color: var(--color-primary); /* Vibrant coral */
+    border-color: var(--color-primary);
+    color: #fff;
+}
+.notes-trigger--avoid:hover {
+    filter: brightness(0.95);
+    color: #fff;
+}
+
 .btn {
     flex-grow: 1;
     background-color: var(--color-primary);

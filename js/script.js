@@ -193,11 +193,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            const notesHTML = product.notes
-                ? `<button class="notes-trigger" data-product-index="${originalIndex}">
-                       <i data-feather="eye"></i> Details
-                   </button>`
-                : '';
+            let notesHTML = '';
+            if (product.notes) {
+                let buttonText;
+                let buttonIcon = 'message-square';
+                let buttonClass = '';
+                const rec = product.recommendation ? product.recommendation.toLowerCase().trim() : '';
+
+                switch (rec) {
+                    case 'recommended':
+                        buttonText = 'Our Pawsitive Review';
+                        buttonClass = 'notes-trigger--recommended';
+                        break;
+                    case 'ok':
+                        buttonText = "BNB's Thoughts";
+                        buttonClass = 'notes-trigger--ok';
+                        break;
+                    case 'avoid':
+                        buttonText = 'Why We Avoid It';
+                        buttonIcon = 'alert-circle'; // Use a warning icon for clarity
+                        buttonClass = 'notes-trigger--avoid';
+                        break;
+                    default: // For products with notes but no recommendation status
+                        buttonText = "Read Our Notes";
+                        break;
+                }
+                notesHTML = `<button class="notes-trigger ${buttonClass}" data-product-index="${originalIndex}"><i data-feather="${buttonIcon}"></i> ${buttonText}</button>`;
+            }
 
             let buttonHTML;
 
