@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function parseCSV(text) {
         try {
-            // Correctly split by newline characters (\n) or carriage return + newline (\r\n).
-            const lines = text.trim().split(/\r?\n/);
+            // Split by newlines, but only if they are not inside double quotes. This handles multi-line notes.
+            const lines = text.trim().split(/\r?\n(?=(?:[^"]*"[^"]*")*[^"]*$)/);
 
             if (lines.length < 2) {
                 fetchErrors.push("Parser Error: The data could not be split into lines. The file may be empty or in an unexpected format.");
