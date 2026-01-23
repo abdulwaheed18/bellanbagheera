@@ -4,8 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CatCouture | Midnight Edition</title>
+    <title>BNB | BElla Nawaab Bagheera</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Open Graph & PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#050505">
+    <link rel="apple-touch-icon" href="images/profile_avatar.png">
+
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
     <!-- MicroModal -->
@@ -56,10 +61,47 @@
 
     <!-- Full Width Masonry Grid -->
     <main class="container">
+        <!-- Loading State -->
+        <div id="loading-indicator" class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Fetching royal treasures...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-message" class="error-message hidden">
+            <i data-feather="alert-circle"></i>
+            <p>Our royal courier was delayed. Please refresh to try again.</p>
+            <button class="btn btn-outline" onclick="window.location.reload()">Retry</button>
+        </div>
+
+        <!-- No Results State -->
+        <div id="no-results" class="no-results hidden">
+            <p>No treasures found matching your search, your highness.</p>
+        </div>
+
         <div id="product-grid" class="masonry-grid">
             <!-- Products injected here -->
         </div>
     </main>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter-section">
+        <div class="container newsletter-container">
+            <div class="newsletter-content">
+                <h3>Join the Inner Circle</h3>
+                <p>Exclusive updates, treat recommendations, and royal decrees.</p>
+            </div>
+            <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Welcome to the inner circle!');">
+                <input type="email" placeholder="Enter your email" required class="form-input">
+                <button type="submit" class="btn btn-primary">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Scroll Top Button -->
+    <button id="scrollTopBtn" class="scroll-top-btn" aria-label="Scroll to top">
+        <i data-feather="arrow-up"></i>
+    </button>
 
     <!-- Minimalist Footer -->
     <footer class="footer-minimal">

@@ -1,13 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
     const grid = document.getElementById('product-grid');
     const searchInput = document.getElementById('product-search');
-    const tabsContainer = document.getElementById('category-tabs'); // New Tab Container
+    const tabsContainer = document.getElementById('category-tabs');
     const sortSelect = document.getElementById('sort-select');
-    const footerSocials = document.getElementById('footer-socials'); // Footer div for socials
+    const footerSocials = document.getElementById('footer-socials');
+
+    // UI Elements for States
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const errorMessage = document.getElementById('error-message');
+    const noResultsMessage = document.getElementById('no-results');
 
     let allProducts = [];
-    let currentCategory = 'All'; // Active category state
+    let currentCategory = 'All';
     const fetchErrors = [];
+
+    // --- 0. UTILS ---
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
 
     // --- 1. DATA FETCHING ---
 
@@ -52,16 +66,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function loadAllProducts() {
         if (!config.googleSheetUrl) return;
+
+        // Show Loading, Hide Error/Grid
+        loadingIndicator.classList.remove('hidden');
+        errorMessage.classList.add('hidden');
+        grid.style.opacity = '0';
+
         try {
             const response = await fetch(config.googleSheetUrl);
-            const parsedProducts = parseCSV(await response.text());
+            const text = await response.text();
+
+            const parsedProducts = parseCSV(text);
             allProducts = parsedProducts.map(product => ({
                 ...product,
                 price: product.price ? parseFloat(String(product.price).replace(/[^0-9.-]+/g, "")) : 0,
                 category: product.category ? product.category.split(',').map(c => c.trim()).filter(Boolean) : []
             }));
+
+            // Hide Loading, Show Grid
+            loadingIndicator.classList.add('hidden');
+            grid.style.opacity = '1';
+
         } catch (error) {
             console.error("Fetch Error", error);
+            loadingIndicator.classList.add('hidden');
+            errorMessage.classList.remove('hidden');
         }
     }
 
@@ -104,8 +133,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const disclosureHTML = config.affiliateDisclosure ? `<p class="affiliate-disclosure" style="margin-top:1.5rem;">${config.affiliateDisclosure}</p>` : '';
 
         footerSocials.innerHTML = socialIconsHTML;
-        // Append disclosure after socials in the parent container
-        // Note: Ideally structure should support this better, inserting adjacent for now
         const container = footerSocials.parentElement;
         const existingDisclosure = container.querySelector('.affiliate-disclosure');
         if (existingDisclosure) existingDisclosure.remove();
@@ -118,11 +145,19 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderProducts(productsToRender) {
         if (!grid) return;
 
+        // No Results Handling
+        if (productsToRender.length === 0) {
+            grid.innerHTML = '';
+            noResultsMessage.classList.remove('hidden');
+            return;
+        } else {
+            noResultsMessage.classList.add('hidden');
+        }
+
         // Staggered entry animation is handled by CSS nth-child or JS delay
         grid.innerHTML = productsToRender.map((product, index) => {
-            const delay = index * 100; // 100ms stagger
+            const delay = index * 50; // Faster stagger for smoother feel
 
-            // Logic for Recommendation Status (Badge)
             // Logic for Recommendation Status (Badge)
             let badge = '';
             if (product.recommendation) {
@@ -193,7 +228,8 @@ document.addEventListener('DOMContentLoaded', function () {
         updateView();
 
         // Listeners
-        searchInput.addEventListener('input', updateView);
+        const debouncedUpdate = debounce(updateView, 300);
+        searchInput.addEventListener('input', debouncedUpdate);
         sortSelect.addEventListener('change', updateView);
 
         // Modal
@@ -237,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Custom Modal Close Logic because we aren't using default Micromodal triggers for this custom setup
+        // Custom Modal Close Logic
         document.querySelectorAll('[data-close-modal]').forEach(b => {
             b.addEventListener('click', () => {
                 const modal = document.getElementById('notes-modal');
@@ -245,6 +281,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(() => modal.setAttribute('aria-hidden', 'true'), 300);
             });
         });
+
+        // --- Scroll Top Button Logic ---
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+        if (scrollTopBtn) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 500) {
+                    scrollTopBtn.classList.add('visible');
+                } else {
+                    scrollTopBtn.classList.remove('visible');
+                }
+            });
+
+            scrollTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            // Re-render icons to ensure arrow-up shows
+            if (window.feather) feather.replace();
+        }
     }
 
     init();

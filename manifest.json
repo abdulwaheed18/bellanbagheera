@@ -1,0 +1,21 @@
+{
+    "name": "Bella Nawaab Bagheera",
+    "short_name": "BNB",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#050505",
+    "theme_color": "#050505",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "images/profile_avatar.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "images/profile_avatar.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

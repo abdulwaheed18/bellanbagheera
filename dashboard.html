@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BNB Inventory | Midnight Dashboard</title>
+    <!-- Use the same stylesheet as the main site -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        /* Dashboard-specific tweaks not in main CSS */
+        body {
+            padding-top: 80px;
+        }
+
+        /* Offset for fixed header */
+        .container {
+            max-width: 1400px;
+        }
+
+        .cat-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+            margin: 3rem 0 1.5rem 0;
+        }
+
+        .cat-group-header h2 {
+            font-size: 1.8rem;
+            color: var(--color-primary);
+        }
+
+        .count-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-family: var(--font-body);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transition: var(--transition-slow);
+        }
+
+        .edit-card:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .edit-card__meta-actions {
+            opacity: 1;
+            transform: none;
+            margin-top: 0.5rem;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state i {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <a href="index.html" class="logo" style="font-size: 1.5rem;">BNB <span>Inventory</span></a>
+
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="openModal()" class="btn btn-primary"><i data-feather="plus"></i> Add Product</button>
+            <button onclick="exportCSV()" class="btn btn-secondary"><i data-feather="download"></i> CSV</button>
+            <button onclick="resetData()" class="btn btn-outline"><i data-feather="refresh-cw"></i> Reset</button>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-wrapper" style="flex-grow: 1; max-width: 500px;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search inventory..."
+                oninput="render()">
+            <i data-feather="search" class="search-icon"></i>
+        </div>
+        <div id="stats" style="font-family: var(--font-body); font-size: 0.9rem; color: var(--color-text-muted);">
+            Loading...</div>
+    </div>
+
+    <!-- Content Grid -->
+    <main class="container" id="content">
+        <!-- Injected via JS -->
+    </main>
+
+    <!-- Modal Form -->
+    <div id="modal" class="modal__overlay">
+        <div class="modal__container">
+            <button class="modal__close" onclick="closeModal()">×</button>
+            <h2 class="modal__title">New Product</h2>
+
+            <form id="productForm">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Product Title</label>
+                        <input type="text" name="title" class="form-input" required placeholder="e.g. Royal Velvet Bed">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <input type="text" name="category" list="catList" class="form-input" required
+                            placeholder="Furniture">
+                        <datalist id="catList"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Price (INR)</label>
+                        <input type="number" step="0.01" name="price" class="form-input" required placeholder="0.00">
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Product URL</label>
+                        <input type="url" name="url" class="form-input" required placeholder="https://...">
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Image URL</label>
+                        <input type="url" name="image" class="form-input" required placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Store</label>
+                        <input type="text" name="store" class="form-input" placeholder="Amazon">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Recommendation</label>
+                        <select name="recommendation" class="form-select">
+                            <option value="">None</option>
+                            <option value="recommended">BNB Pick</option>
+                            <option value="ok">Good Find</option>
+                            <option value="avoid">Avoid</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Notes (Markdown Supported)</label>
+                        <textarea name="notes" rows="4" class="form-textarea"
+                            placeholder="Write your review here..."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Save to Inventory</button>
+                    <button type="button" onclick="closeModal()" class="btn btn-outline"
+                        style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Config & Logic -->
+    <script src="js/config.js"></script>
+    <script>
+        // --- Logic Adapted for Dashboard ---
+        let products = [];
+        const DB_KEY = 'bnb_inventory_v1';
+
+        async function init() {
+            const saved = localStorage.getItem(DB_KEY);
+            if (saved) {
+                products = JSON.parse(saved);
+                render();
+            } else if (typeof config !== 'undefined' && config.googleSheetUrl) {
+                await fetchFromSheet();
+            } else {
+                renderEmpty();
+            }
+            feather.replace();
+        }
+
+        async function fetchFromSheet() {
+            try {
+                const res = await fetch(config.googleSheetUrl);
+                const text = await res.text();
+                products = parseCSV(text);
+                save();
+                render();
+            } catch (e) { console.error(e); }
+        }
+
+        // Reusing the robust CSV parser logic
+        function parseCSV(text) {
+            const lines = text.trim().split(/\r?\n(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+            if (lines.length < 2) return [];
+            const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const keyMap = { 'title': 'title', 'name': 'title', 'product url': 'url', 'image url': 'image', 'store': 'store', 'category': 'category', 'notes': 'notes', 'price': 'price', 'recommendation': 'recommendation' };
+            const mappedHeader = header.map(h => keyMap[h] || h);
+
+            return lines.slice(1).map(line => {
+                let values = [], current = '', inQuote = false;
+                for (let char of line) {
+                    if (char === '"') inQuote = !inQuote;
+                    else if (char === ',' && !inQuote) { values.push(current.trim().replace(/^"|"$/g, '')); current = ''; }
+                    else current += char;
+                }
+                values.push(current.trim().replace(/^"|"$/g, ''));
+                const obj = mappedHeader.reduce((o, k, i) => { if (k) o[k] = values[i]; return o; }, {});
+
+                // --- MULTI-CATEGORY LOGIC ---
+                // Store original string but also parse into array
+                if (obj.category) {
+                    obj.categories = obj.category.split(',').map(c => c.trim()).filter(Boolean);
+                } else {
+                    obj.categories = ['Uncategorized'];
+                }
+                return obj;
+            });
+        }
+
+        function render() {
+            const container = document.getElementById('content');
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            container.innerHTML = '';
+
+            if (products.length === 0) { renderEmpty(); return; }
+
+            // Filter logic: Check if ANY category (or title) matches query
+            const filtered = products.filter(p => (p.title || '').toLowerCase().includes(query) || (p.category || '').toLowerCase().includes(query));
+            document.getElementById('stats').innerText = `${filtered.length} Items`;
+
+            // Flatten all unique categories for the dropdown and display
+            const allCats = new Set();
+            filtered.forEach(p => {
+                if (p.categories) p.categories.forEach(c => allCats.add(c));
+            });
+            const categories = [...allCats].sort();
+
+            document.getElementById('catList').innerHTML = categories.map(c => `<option value="${c}">`).join('');
+
+            categories.forEach(cat => {
+                const group = document.createElement('div');
+                // IMPORTANT: Filter products that include THIS specific category in their array
+                const catProds = filtered.filter(p => p.categories && p.categories.includes(cat));
+
+                if (catProds.length === 0) return;
+
+                group.innerHTML = `
+                    <div class="cat-group-header">
+                        <h2>${cat}</h2>
+                        <span class="count-badge">${catProds.length}</span>
+                    </div>
+                    <div class="masonry-grid" style="padding-bottom: 2rem;"></div>
+                `;
+
+                const grid = group.querySelector('.masonry-grid');
+                catProds.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'edit-card'; // Reuse main card style
+
+                    // Badge Logic
+                    let badgeClass = '';
+                    let badgeText = '';
+                    if (p.recommendation === 'recommended') { badgeClass = 'product-card__badge--recommended'; badgeText = 'BNB PICK'; }
+                    else if (p.recommendation === 'ok') { badgeClass = 'product-card__badge--ok'; badgeText = 'GOOD FIND'; }
+                    else if (p.recommendation === 'avoid') { badgeClass = 'product-card__badge--avoid'; badgeText = 'AVOID'; }
+
+                    const badgeHtml = badgeText ? `<div class="product-card__badge ${badgeClass}" style="position:absolute; top:10px; left:10px;">${badgeText}</div>` : '';
+
+                    card.innerHTML = `
+                        <button class="delete-btn" onclick="remove('${p.title.replace(/'/g, "\\'")}')"><i data-feather="trash-2" style="width:14px;"></i></button>
+                        <div class="edit-card__img-wrapper">
+                            ${badgeHtml}
+                             <img src="${p.image}" class="edit-card__img" loading="lazy">
+                        </div>
+                        <div class="edit-card__details">
+                            <h3 class="edit-card__title" style="font-size: 1rem;">${p.title}</h3>
+                            <div class="edit-card__meta-actions" style="opacity: 1; transform: none; color: var(--color-text-muted);">
+                                <span class="text-gold">₹${parseFloat(p.price || 0).toFixed(2)}</span>
+                                <span>${p.store}</span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                container.appendChild(group);
+            });
+            feather.replace();
+        }
+
+        function renderEmpty() {
+            document.getElementById('content').innerHTML = `
+                <div class="empty-state">
+                    <i data-feather="box"></i>
+                    <p>No inventory found. Add a product to get started.</p>
+                </div>
+             `;
+            feather.replace();
+        }
+
+        function remove(title) {
+            if (confirm('Delete this product?')) {
+                products = products.filter(p => p.title !== title);
+                save(); render();
+            }
+        }
+
+        document.getElementById('productForm').onsubmit = function (e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(this));
+            products.unshift(data);
+            save(); render(); closeModal();
+            this.reset();
+        }
+
+        function exportCSV() {
+            // Basic CSV export logic
+            const headers = ['title', 'product url', 'image url', 'category', 'price', 'store', 'notes', 'recommendation'];
+            const csv = [headers.join(',')]
+                .concat(products.map(p =>
+                    headers.map(h => {
+                        const k = h === 'product url' ? 'url' : (h === 'image url' ? 'image' : h);
+                        return `"${(p[k] || '').replace(/"/g, '""')}"`;
+                    }).join(',')
+                )).join('\n');
+
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'bnb_inventory.csv';
+            a.click();
+        }
+
+        function resetData() {
+            if (confirm('Reset database from Live Sheet?')) {
+                localStorage.removeItem(DB_KEY);
+                location.reload();
+            }
+        }
+
+        function save() { localStorage.setItem(DB_KEY, JSON.stringify(products)); }
+        function openModal() {
+            const m = document.getElementById('modal');
+            m.style.display = 'flex';
+            setTimeout(() => m.classList.add('is-open'), 10);
+        }
+        function closeModal() {
+            const m = document.getElementById('modal');
+            m.classList.remove('is-open');
+            setTimeout(() => m.style.display = 'none', 300);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+
+</html>
