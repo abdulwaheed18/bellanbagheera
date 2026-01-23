@@ -6,8 +6,8 @@ const config = {
         logoName: "BNB"
     },
     hero: {
-        title: "Our Favorite Finds",
-        subtitle: "A curated collection of toys, treats, and treasures we absolutely adore. Hand-picked for the most discerning pets."
+        title: "Bella Nawaab Bagheera",
+        subtitle: "Not just another store. These are the toys, treats, and treasures we personally use and love (or suggest avoiding!). Real feedback from real cats."
     },
     socials: [
         { name: 'Instagram', url: 'https://instagram.com/bella_and_bagheera', icon: 'images/icons/instagram.svg' },

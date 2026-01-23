@@ -15,7 +15,7 @@ function formatNotesContent(text) {
 	// 1. Find all URLs and replace them with placeholders, storing their type (block/inline)
 	const textWithPlaceholders = text.replace(/(https?:\/\/[^\s]+)/g, (url) => {
 		const placeholder = `%%URL_${placeholderIndex++}%%`;
-		
+
 		let html;
 		let isBlock = false;
 
@@ -35,7 +35,19 @@ function formatNotesContent(text) {
 			html = `<div class="video-responsive"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
 			isBlock = true;
 		} else if (instagramMatch) {
-			html = `<blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14"></blockquote>`;
+			// Construct a clean URL using the ID to avoid query param issues
+			// Use /p/ for universal embed compatibility (works for reels too)
+			const type = instagramMatch[1]; // p, reel, reels
+			const id = instagramMatch[2];
+			const cleanUrl = `https://www.instagram.com/p/${id}/`;
+
+			// Minimized blockquote structure as per Instagram's latest standards
+			// Use width:260px to match our CSS and allow multiple side-by-side
+			html = `<blockquote class="instagram-media" data-instgrm-permalink="${cleanUrl}" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:260px; min-width:240px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
+                <div style="padding:16px;">
+                    <a href="${cleanUrl}" target="_blank" style="text-decoration:none;">View on Instagram</a>
+                </div>
+            </blockquote>`;
 			isBlock = true;
 		} else {
 			html = `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
