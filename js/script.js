@@ -16,6 +16,24 @@ document.addEventListener('DOMContentLoaded', function () {
     let favorites = new Set(JSON.parse(localStorage.getItem('bnb_favorites') || '[]'));
 
     // --- 0. UTILS ---
+    function showToast(message) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<i data-feather="check-circle" style="color: var(--color-primary)"></i> ${message}`;
+
+        container.appendChild(toast);
+        feather.replace();
+
+        // Animate out
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            toast.addEventListener('animationend', () => toast.remove());
+        }, 3000);
+    }
+
     function debounce(func, wait) {
         let timeout;
         return function (...args) {
@@ -52,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 await navigator.share(shareData);
             } else {
                 await navigator.clipboard.writeText(`${product.title} - ${product.url}`);
-                alert('Detailed copied to clipboard for sharing!');
+                showToast('Link copied to royal scroll!');
             }
         } catch (err) {
             console.log('Error sharing:', err);
@@ -103,10 +121,20 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadAllProducts() {
         if (!config.googleSheetUrl) return;
 
-        // Show Loading, Hide Error/Grid
-        loadingIndicator.classList.remove('hidden');
+        // Show Skeleton Loading, Hide Error/Grid
+        loadingIndicator.classList.add('hidden'); // Hide default spinner
         errorMessage.classList.add('hidden');
-        grid.style.opacity = '0';
+        grid.style.opacity = '1';
+
+        // Render Skeletons
+        const skeletonCount = 8;
+        grid.innerHTML = Array(skeletonCount).fill(0).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton-img"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text short"></div>
+            </div>
+        `).join('');
 
         try {
             const response = await fetch(config.googleSheetUrl);
@@ -140,9 +168,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const allCats = allProducts.flatMap(p => p.category || []);
         const categories = [...new Set(allCats)].filter((v, i, a) => a.indexOf(v) === i); // Unique
 
-        // Clear existing options except the first "All" (if we want to keep it dynamic, we can rebuild all)
-        // Rebuilding all to ensure order "Top Picks" etc if needed.
-
         let optionsHTML = `<option value="All">All Categories</option>`;
 
         // Add Favorites Option
@@ -165,6 +190,38 @@ document.addEventListener('DOMContentLoaded', function () {
             currentCategory = e.target.value;
             updateView();
         });
+    }
+
+    function renderSpotlight() {
+        const spotlightSection = document.getElementById('spotlight-section');
+        if (!spotlightSection) return;
+
+        // Find recommended products
+        const recommended = allProducts.filter(p => p.recommendation && p.recommendation.toLowerCase() === 'recommended');
+        // Fallback to all if no recommended
+        const pool = recommended.length > 0 ? recommended : allProducts;
+
+        if (pool.length === 0) return;
+
+        const randomProduct = pool[Math.floor(Math.random() * pool.length)];
+
+        spotlightSection.innerHTML = `
+            <div class="spotlight-card">
+                <div class="spotlight-img-wrapper">
+                    <a href="${randomProduct.url}" target="_blank">
+                        <img src="${randomProduct.image}" class="spotlight-img" alt="${randomProduct.title}">
+                    </a>
+                </div>
+                <div class="spotlight-content">
+                    <h2>${randomProduct.title}</h2>
+                    <p>${randomProduct.notes ? randomProduct.notes.substring(0, 150) + '...' : ' a royal favorite.'}</p>
+                    <a href="${randomProduct.url}" target="_blank" class="btn btn-primary">
+                        Shop Now <i data-feather="arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        `;
+        spotlightSection.classList.remove('hidden');
     }
 
     function renderFooterSocials() {
@@ -322,14 +379,59 @@ document.addEventListener('DOMContentLoaded', function () {
             if (trigger) {
                 const idx = trigger.dataset.productIndex;
                 const product = allProducts[idx];
-                document.getElementById('notes-modal-title').textContent = product.title;
-                document.getElementById('notes-modal-content').innerHTML = formatNotesContent(product.notes);
+
+                // Enhanced Modal Logic
+                const modalContainer = document.querySelector('.modal__container');
+                // Temporarily save close button logic if needed, but easier to recreate structure.
+                // Re-creating structure ensures clean state.
+
+                modalContainer.innerHTML = '';
+
+                // Close Button
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'modal__close';
+                closeBtn.dataset.closeModal = '';
+                closeBtn.innerHTML = '×';
+                modalContainer.appendChild(closeBtn);
+
+                // Image Col
+                const imgCol = document.createElement('div');
+                imgCol.className = 'modal__image-col';
+                imgCol.innerHTML = `<img src="${product.image}" alt="${product.title}">`;
+
+                // Content Col
+                const contentCol = document.createElement('div');
+                contentCol.className = 'modal__content-col';
+                contentCol.innerHTML = `
+                    <h2 class="modal__title" id="notes-modal-title">${product.title}</h2>
+                    <div class="modal__content" id="notes-modal-content">${formatNotesContent(product.notes)}</div>
+                    <a href="${product.url}" target="_blank" class="btn btn-primary" style="margin-top:2rem; align-self:flex-start;">
+                        Buy Now <i data-feather="arrow-right"></i>
+                    </a>
+                `;
+
+                modalContainer.appendChild(imgCol);
+                modalContainer.appendChild(contentCol);
+
+                // Re-bind close listener for the newly created button (though delegation handles it, 
+                // the delegation listener is on document.querySelectorAll... created at init time.
+                // Wait! existing delegation: `document.querySelectorAll('[data-close-modal]').forEach...` 
+                // This ONLY works for elements existing AT INIT.
+                // Dynamic elements won't be caught.
+                // I MUST Attach listener to new close button OR change delegation to be on document/body.
+
+                // Attaching listener directly:
+                closeBtn.addEventListener('click', () => {
+                    const modal = document.getElementById('notes-modal');
+                    modal.classList.remove('is-open');
+                    setTimeout(() => modal.setAttribute('aria-hidden', 'true'), 300);
+                });
 
                 const modal = document.getElementById('notes-modal');
                 modal.classList.add('is-open');
                 modal.setAttribute('aria-hidden', 'false');
 
-                // Robustly load and process Instagram embeds
+                // Instagram logic
                 if (window.instgrm) {
                     window.instgrm.Embeds.process();
                 } else {
@@ -340,9 +442,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         s.src = "https://www.instagram.com/embed.js";
                         s.async = true;
                         s.defer = true;
-                        s.onload = () => {
-                            if (window.instgrm) window.instgrm.Embeds.process();
-                        };
+                        s.onload = () => { if (window.instgrm) window.instgrm.Embeds.process(); };
                         document.body.appendChild(s);
                     }
                 }
@@ -399,6 +499,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 heroSubtitle.style.transform = `translate(0, 0)`;
             });
         }
+
+        // --- Paw Cursor Trail ---
+        let lastPawTime = 0;
+        document.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (now - lastPawTime > 100) { // Throttle: 1 paw every 100ms
+                lastPawTime = now;
+
+                const paw = document.createElement('div');
+                paw.classList.add('paw-trail');
+                paw.style.left = `${e.pageX}px`;
+                paw.style.top = `${e.pageY}px`;
+                document.body.appendChild(paw);
+
+                // Fade and remove
+                setTimeout(() => {
+                    paw.style.opacity = '0';
+                    setTimeout(() => paw.remove(), 500); // Wait for transition
+                }, 500);
+            }
+        });
     }
 
     init();
