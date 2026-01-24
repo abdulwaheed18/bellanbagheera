@@ -96,28 +96,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- 2. RENDERERS ---
 
-    function renderTabs() {
-        if (!tabsContainer) return;
+    function renderCategoryDropdown() {
+        const categorySelect = document.getElementById('category-select');
+        if (!categorySelect) return;
 
         // Extract unique categories
         const allCats = allProducts.flatMap(p => p.category || []);
-        const categories = ['All', "Top Picks", ...new Set(allCats)].filter((v, i, a) => a.indexOf(v) === i); // Unique
+        const categories = [...new Set(allCats)].filter((v, i, a) => a.indexOf(v) === i); // Unique
 
-        tabsContainer.innerHTML = categories.map(c =>
-            `<span class="cat-tab ${c === currentCategory ? 'active' : ''}" data-category="${c}">${c}</span>`
-        ).join('');
+        // Clear existing options except the first "All" (if we want to keep it dynamic, we can rebuild all)
+        // Rebuilding all to ensure order "Top Picks" etc if needed.
 
-        // Add click listeners
-        tabsContainer.querySelectorAll('.cat-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Update active state UI
-                document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+        let optionsHTML = `<option value="All">All Categories</option>`;
+        if (categories.includes("Top Picks")) {
+            optionsHTML += `<option value="Top Picks">Top Picks</option>`;
+            categories.splice(categories.indexOf("Top Picks"), 1);
+        }
 
-                // Update state and re-render grid
-                currentCategory = tab.dataset.category;
-                updateView();
-            });
+        categories.forEach(c => {
+            optionsHTML += `<option value="${c}">${c}</option>`;
+        });
+
+        categorySelect.innerHTML = optionsHTML;
+        categorySelect.value = currentCategory;
+
+        // Listener
+        categorySelect.addEventListener('change', (e) => {
+            currentCategory = e.target.value;
+            updateView();
         });
     }
 
@@ -223,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- 3. INIT ---
     async function init() {
         await loadAllProducts();
-        renderTabs();
+        renderCategoryDropdown();
         renderFooterSocials();
         updateView();
 

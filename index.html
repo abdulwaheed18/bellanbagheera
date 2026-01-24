@@ -21,6 +21,10 @@
 
     <!-- Magazine Header -->
     <header class="header">
+        <div class="announcement-bar">
+            <a href="https://api.whatsapp.com/send?phone=919336536492" target="_blank">For Collabs, Please WhatsApp for
+                quick connect (NO Call)</a>
+        </div>
         <div class="container header__content">
             <a href="#" class="logo">BNB</a>
 
@@ -35,9 +39,12 @@
     <nav class="filter-bar">
         <div class="container filter-bar__content">
             <!-- Categories injected here -->
-            <div id="category-tabs" class="category-tabs">
-                <span class="cat-tab active" data-category="All">All</span>
-                <!-- JS will populate -->
+            <!-- Categories Dropdown -->
+            <div class="category-dropdown sort-minimal">
+                <select id="category-select">
+                    <option value="All">All Categories</option>
+                    <!-- JS will populate -->
+                </select>
             </div>
 
             <div class="sort-minimal">
@@ -91,10 +98,10 @@
                 <h3>Join the Inner Circle</h3>
                 <p>Exclusive updates, treat recommendations, and royal decrees.</p>
             </div>
-            <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Welcome to the inner circle!');">
-                <input type="email" placeholder="Enter your email" required class="form-input">
-                <button type="submit" class="btn btn-primary">Subscribe</button>
-            </form>
+            <a href="https://www.instagram.com/channel/AbZP1LIXPRuhMnOr/?igsh=ZnFlMGx3ZTIycXB3" target="_blank"
+                class="btn btn-primary">
+                <i data-feather="instagram"></i> Subscribe to Channel
+            </a>
         </div>
     </section>
 

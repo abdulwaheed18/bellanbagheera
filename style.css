@@ -38,7 +38,7 @@
     /* --- Layout --- */
     --container-width: 1400px;
     /* Wider for magazine look */
-    --header-height: 90px;
+    --header-height: 110px;
     --radius-sm: 4px;
     /* Sharper, more elegant */
     --radius-md: 8px;
@@ -111,16 +111,47 @@ img {
     top: 0;
     width: 100%;
     z-index: 100;
-    padding: 1rem 0;
+    padding: 0;
+    /* Removed padding, managed by children */
     transition: var(--transition-slow);
-    background: linear-gradient(to bottom, rgba(5, 5, 5, 0.8), transparent);
+    background: linear-gradient(to bottom, rgba(5, 5, 5, 0.9), rgba(5, 5, 5, 0.8));
+    /* Slightly darker for legibility */
     backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+}
+
+.announcement-bar {
+    background: var(--color-primary);
+    color: #050505;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    width: 100%;
+}
+
+.announcement-bar a {
+    display: block;
+    padding: 0.4rem 1rem;
+    color: inherit;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.announcement-bar a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    /* Lighten on hover */
 }
 
 .header__content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    padding: 0.5rem 2rem;
+    /* Re-added padding for content */
 }
 
 .logo {
@@ -191,44 +222,36 @@ img {
     gap: 2rem;
 }
 
-/* Categories as "Tabs" */
-.category-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    /* Allow wrapping */
-    gap: 1.5rem 2rem;
-    /* Row gap and Column gap */
-    padding-right: 0;
-    max-width: 80%;
-    /* Ensure space for sort dropdown */
+/* Categories Dropdown */
+.category-dropdown {
+    flex: 1;
 }
 
-.cat-tab {
+.category-dropdown select {
+    background: transparent;
+    color: var(--color-text-muted);
+    border: none;
     font-family: var(--font-body);
     font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-text-muted);
     cursor: pointer;
-    position: relative;
-    white-space: nowrap;
-    transition: var(--transition-slow);
-}
-
-.cat-tab:hover,
-.cat-tab.active {
-    color: var(--color-text-main);
-}
-
-.cat-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1.7rem;
-    /* Align with border bottom of bar */
-    left: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-right: 1.5rem;
     width: 100%;
-    height: 2px;
-    background: var(--color-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    /* Add underline to match look */
+    padding-bottom: 0.5rem;
+}
+
+.category-dropdown select:focus {
+    outline: none;
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.category-dropdown select option {
+    background-color: #050505;
+    color: white;
 }
 
 /* Sort Dropdown Minimal */
