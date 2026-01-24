@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let allProducts = [];
     let currentCategory = 'All';
     const fetchErrors = [];
+    let favorites = new Set(JSON.parse(localStorage.getItem('bnb_favorites') || '[]'));
 
     // --- 0. UTILS ---
     function debounce(func, wait) {
@@ -21,6 +22,41 @@ document.addEventListener('DOMContentLoaded', function () {
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), wait);
         };
+    }
+
+    function toggleFavorite(productTitle) {
+        if (favorites.has(productTitle)) {
+            favorites.delete(productTitle);
+        } else {
+            favorites.add(productTitle);
+        }
+        localStorage.setItem('bnb_favorites', JSON.stringify([...favorites]));
+        updateView();
+
+        // Animate heart
+        const btns = document.querySelectorAll(`[data-u-favorite="${productTitle}"]`);
+        btns.forEach(btn => {
+            btn.classList.toggle('active', favorites.has(productTitle));
+        });
+    }
+
+    async function shareProduct(product) {
+        const shareData = {
+            title: product.title,
+            text: `Check out this royal treasure: ${product.title}`,
+            url: product.url
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(`${product.title} - ${product.url}`);
+                alert('Detailed copied to clipboard for sharing!');
+            }
+        } catch (err) {
+            console.log('Error sharing:', err);
+        }
     }
 
     // --- 1. DATA FETCHING ---
@@ -108,6 +144,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // Rebuilding all to ensure order "Top Picks" etc if needed.
 
         let optionsHTML = `<option value="All">All Categories</option>`;
+
+        // Add Favorites Option
+        optionsHTML += `<option value="Favorites">❤ Favorites</option>`;
+
         if (categories.includes("Top Picks")) {
             optionsHTML += `<option value="Top Picks">Top Picks</option>`;
             categories.splice(categories.indexOf("Top Picks"), 1);
@@ -184,10 +224,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 noteBtn = `<div class="txt-btn notes-trigger" data-product-index="${originalIndex}">READ NOTES</div>`;
             }
 
+            const isFav = favorites.has(product.title);
+
             return `
             <div class="edit-card" style="animation-delay: ${delay}ms">
                 <div class="edit-card__img-wrapper">
                     ${badge}
+                    
+                    <button class="love-btn ${isFav ? 'active' : ''}" data-u-favorite="${product.title}" aria-label="Add to favorites">
+                        <i data-feather="heart"></i>
+                    </button>
+
                     <a href="${product.url}" target="_blank">
                         <img src="${product.image}" class="edit-card__img" loading="lazy" alt="${product.title}">
                     </a>
@@ -198,6 +245,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     <div class="edit-card__meta-actions">
                          ${noteBtn}
+                         <button class="icon-btn share-trigger" data-title="${product.title}" aria-label="Share">
+                            <i data-feather="share-2"></i>
+                         </button>
                          <a href="${product.url}" target="_blank" class="txt-btn">BUY NOW</a>
                     </div>
                 </div>
@@ -214,6 +264,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Filter
         let filtered = allProducts.filter(p => {
+            if (currentCategory === 'Favorites') {
+                return favorites.has(p.title);
+            }
             const matchesCat = currentCategory === 'All' ? true : (p.category && p.category.includes(currentCategory));
             const matchesSearch = p.title.toLowerCase().includes(query);
             return matchesCat && matchesSearch;
@@ -246,8 +299,25 @@ document.addEventListener('DOMContentLoaded', function () {
             awaitCloseAnimation: true
         });
 
-        // Event delegation for Notes
+        // Event delegation for Notes, Favorites, and Share
         grid.addEventListener('click', e => {
+            const favBtn = e.target.closest('.love-btn');
+            if (favBtn) {
+                e.preventDefault(); // Stop link click if inside
+                const title = favBtn.dataset.uFavorite;
+                toggleFavorite(title);
+                return;
+            }
+
+            const shareBtn = e.target.closest('.share-trigger');
+            if (shareBtn) {
+                e.preventDefault();
+                const title = shareBtn.dataset.title;
+                const product = allProducts.find(p => p.title === title);
+                if (product) shareProduct(product);
+                return;
+            }
+
             const trigger = e.target.closest('.notes-trigger');
             if (trigger) {
                 const idx = trigger.dataset.productIndex;
@@ -307,6 +377,27 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             // Re-render icons to ensure arrow-up shows
             if (window.feather) feather.replace();
+        }
+
+        // --- Parallax Hero ---
+        const hero = document.querySelector('.hero');
+        const heroTitle = document.getElementById('hero-title');
+        const heroSubtitle = document.getElementById('hero-subtitle');
+
+        if (hero && heroTitle && heroSubtitle) {
+            hero.addEventListener('mousemove', (e) => {
+                const x = (window.innerWidth / 2 - e.pageX) / 20;
+                const y = (window.innerHeight / 2 - e.pageY) / 20;
+
+                heroTitle.style.transform = `translate(${x}px, ${y}px)`;
+                heroSubtitle.style.transform = `translate(${x * 0.5}px, ${y * 0.5}px)`;
+            });
+
+            // Reset on leave for cleanliness
+            hero.addEventListener('mouseleave', () => {
+                heroTitle.style.transform = `translate(0, 0)`;
+                heroSubtitle.style.transform = `translate(0, 0)`;
+            });
         }
     }
 

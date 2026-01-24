@@ -324,6 +324,8 @@ img {
     /* Required for background-clip on some browsers */
     opacity: 0;
     animation: fadeUp 1s ease forwards 0.2s;
+    transition: transform 0.1s ease-out;
+    /* Parallax Smoothness */
 }
 
 
@@ -336,6 +338,8 @@ img {
     font-weight: 300;
     opacity: 0;
     animation: fadeUp 1s ease forwards 0.5s;
+    transition: transform 0.1s ease-out;
+    /* Parallax Smoothness */
 }
 
 /* --- Masonry Grid --- */
@@ -446,7 +450,8 @@ img {
     margin-top: 1rem;
     display: flex;
     justify-content: center;
-    gap: 1.5rem;
+    align-items: center;
+    gap: 1rem;
     opacity: 0;
     transform: translateY(10px);
     transition: var(--transition-slow);
@@ -455,6 +460,68 @@ img {
 .edit-card:hover .edit-card__meta-actions {
     opacity: 1;
     transform: translateY(0);
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: var(--transition-slow);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    color: var(--color-primary);
+    transform: scale(1.1);
+}
+
+.love-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.4);
+    /* Slight backing */
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    /* Default white */
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.edit-card:hover .love-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Active State for Heart */
+.love-btn.active {
+    background: var(--color-primary);
+    color: #050505;
+    opacity: 1;
+    transform: scale(1) !important;
+}
+
+.love-btn:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.love-btn.active:hover {
+    background: var(--color-primary);
 }
 
 .txt-btn {
