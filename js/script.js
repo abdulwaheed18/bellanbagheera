@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const tabsContainer = document.getElementById('category-tabs');
     const sortSelect = document.getElementById('sort-select');
     const footerSocials = document.getElementById('footer-socials');
+    const searchResults = document.getElementById('search-results');
 
     // UI Elements for States
     const loadingIndicator = document.getElementById('loading-indicator');
@@ -159,6 +160,58 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- 2. RENDERERS ---
+
+    function renderSearchResults(results) {
+        if (!results.length) {
+            searchResults.classList.add('hidden');
+            return;
+        }
+
+        const html = results.slice(0, 5).map(p => `
+            <div class="search-result-item" data-title="${p.title}">
+                <img src="${p.image}" class="search-result-thumb" alt="${p.title}">
+                <div class="search-result-info">
+                    <span class="search-result-title">${p.title}</span>
+                    <span class="search-result-price">₹${p.price.toFixed(2)}</span>
+                </div>
+            </div>
+        `).join('');
+
+        searchResults.innerHTML = html;
+        searchResults.classList.remove('hidden');
+
+        // Nav logic
+        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const title = item.dataset.title;
+                searchInput.value = title;
+                currentCategory = 'All'; // Reset category to find the item
+
+                // Update select 
+                const catSelect = document.getElementById('category-select');
+                if (catSelect) catSelect.value = 'All';
+
+                updateView();
+                searchResults.classList.add('hidden');
+            });
+        });
+    }
+
+    function handleSearch() {
+        const query = searchInput.value.toLowerCase();
+
+        if (query.length < 2) {
+            searchResults.classList.add('hidden');
+            updateView();
+            return;
+        }
+
+        // Search global (ignore category) for dropdown
+        const matches = allProducts.filter(p => p.title.toLowerCase().includes(query));
+        renderSearchResults(matches);
+
+        updateView(); // Update grid as well
+    }
 
     function renderCategoryDropdown() {
         const categorySelect = document.getElementById('category-select');
@@ -344,8 +397,19 @@ document.addEventListener('DOMContentLoaded', function () {
         updateView();
 
         // Listeners
-        const debouncedUpdate = debounce(updateView, 300);
-        searchInput.addEventListener('input', debouncedUpdate);
+        const debouncedSearch = debounce(handleSearch, 300);
+        searchInput.addEventListener('input', debouncedSearch);
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.length >= 2) handleSearch();
+        });
+
+        // Close search results on click outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+
         sortSelect.addEventListener('change', updateView);
 
         // Modal
