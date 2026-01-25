@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BNB Whiskers in the Wall 🐾</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+
+        #exit-zone {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+        }
+
+        .tutorial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.2);
+            font-family: sans-serif;
+            font-weight: bold;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: fadeOut 3s forwards 2s;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="tutorial">Wait & Pounce</div>
+    <div id="exit-zone"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script type="module">
+        import { GameEngine, Draw, randomRange } from './game-utils.js';
+
+        const STATE_IDLE = 0;
+        const STATE_TEASE = 1;
+        const STATE_PEEK = 2;
+        const STATE_RETREAT = 3;
+        const STATE_CAUGHT = 4;
+
+        class Mouse {
+            constructor(holeX, holeY) {
+                this.hx = holeX; this.hy = holeY;
+                this.x = holeX; this.y = holeY; // Visual position
+                this.state = STATE_IDLE;
+                this.timer = randomRange(1, 4);
+                this.progress = 0; // 0 to 1 anim progress
+                this.angle = randomRange(0, Math.PI * 2);
+            }
+
+            update(dt, game) {
+                this.timer -= dt;
+
+                // State Machine
+                switch (this.state) {
+                    case STATE_IDLE:
+                        if (this.timer <= 0) {
+                            if (Math.random() < 0.4) {
+                                this.state = STATE_TEASE;
+                                this.timer = 2.0;
+                                game.audio.playTone(80, 'triangle', 0.05, 0.02); // Scuffle sound
+                            } else {
+                                this.state = STATE_PEEK;
+                                this.timer = 1.0; // Time to fully emerge
+                            }
+                        }
+                        break;
+
+                    case STATE_TEASE:
+                        // Wiggle eyes/whiskers in dark
+                        if (this.timer <= 0) {
+                            this.state = STATE_IDLE;
+                            this.timer = randomRange(2, 5);
+                        }
+                        break;
+
+                    case STATE_PEEK:
+                        // Move out
+                        this.progress += dt * 3;
+                        if (this.progress > 1) this.progress = 1;
+
+                        // Wait at top
+                        if (this.progress >= 1 && this.timer <= 0) {
+                            this.state = STATE_RETREAT;
+                        }
+                        break;
+
+                    case STATE_RETREAT:
+                        this.progress -= dt * 4;
+                        if (this.progress <= 0) {
+                            this.progress = 0;
+                            this.state = STATE_IDLE;
+                            this.timer = randomRange(1, 4);
+                        }
+                        break;
+
+                    case STATE_CAUGHT:
+                        this.progress -= dt * 5; // Fast shrink
+                        if (this.progress <= 0) {
+                            this.progress = 0;
+                            this.state = STATE_IDLE;
+                            this.timer = randomRange(3, 6);
+                        }
+                        break;
+                }
+            }
+
+            draw(ctx) {
+                if (this.state === STATE_IDLE) return;
+
+                ctx.save();
+                ctx.translate(this.hx, this.hy);
+                ctx.rotate(this.angle);
+
+                // Draw Mouse relative to hole center
+                // distance from center based on progress
+                const dist = this.progress * 50;
+                ctx.translate(dist, 0);
+
+                if (this.state === STATE_TEASE) {
+                    // Just glowing eyes deep roughly
+                    ctx.fillStyle = 'rgba(255, 255, 200, 0.5)';
+                    ctx.shadowColor = '#fff'; ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(10, -10, 3, 0, Math.PI * 2);
+                    ctx.arc(10, 10, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                else if (this.state === STATE_PEEK || this.state === STATE_RETREAT || this.state === STATE_CAUGHT) {
+                    // Draw Mouse Body
+                    ctx.fillStyle = '#aaa';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 30, 20, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Ears
+                    ctx.fillStyle = '#cc99aa'; // pinkish
+                    ctx.beginPath();
+                    ctx.arc(20, -15, 10, 0, Math.PI * 2);
+                    ctx.arc(20, 15, 10, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Nose
+                    ctx.fillStyle = 'pink';
+                    ctx.beginPath();
+                    ctx.arc(28, 0, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Eyes
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(20, -8, 3, 0, Math.PI * 2);
+                    ctx.arc(20, 8, 3, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Whiskers
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(28, 2); ctx.lineTo(45, 10);
+                    ctx.moveTo(28, 0); ctx.lineTo(48, 0);
+                    ctx.moveTo(28, -2); ctx.lineTo(45, -10);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+
+            checkHit(x, y, game) {
+                if (this.state === STATE_PEEK && this.progress > 0.5) {
+                    const dist = Math.hypot(x - this.hx, y - this.hy); // Check against hole center roughly
+                    if (dist < 70) {
+                        this.state = STATE_CAUGHT;
+                        game.audio.playPop();
+                        game.spawnParticles(this.hx + Math.cos(this.angle) * 40, this.hy + Math.sin(this.angle) * 40);
+                        return true;
+                    }
+                }
+                else if (this.state === STATE_TEASE) {
+                    // Punish? Or just retreat fast
+                    this.state = STATE_IDLE;
+                    this.timer = 1.0;
+                }
+                return false;
+            }
+        }
+
+        class PeekGame extends GameEngine {
+            constructor() {
+                super('gameCanvas');
+                this.mice = [];
+                this.particles = [];
+
+                this.setupHoles();
+                this.setupExit();
+                this.start((dt) => this.update(dt), (ctx) => this.draw(ctx));
+            }
+
+            setupHoles() {
+                const cols = 2;
+                const rows = 3;
+                const padX = this.width / (cols + 1);
+                const padY = this.height / (rows + 1);
+
+                for (let r = 1; r <= rows; r++) {
+                    for (let c = 1; c <= cols; c++) {
+                        // Jitter positions
+                        const x = padX * c + randomRange(-20, 20);
+                        const y = padY * r + randomRange(-20, 20);
+                        this.mice.push(new Mouse(x, y));
+                    }
+                }
+            }
+
+            setupExit() {
+                let taps = 0, timer;
+                const z = document.getElementById('exit-zone');
+                const trig = () => {
+                    taps++; clearTimeout(timer);
+                    timer = setTimeout(() => taps = 0, 600);
+                    if (taps >= 3) window.location.href = 'index.html';
+                };
+                z.addEventListener('touchstart', (e) => { e.preventDefault(); trig(); });
+                z.addEventListener('mousedown', trig);
+            }
+
+            spawnParticles(x, y) {
+                for (let i = 0; i < 10; i++) {
+                    this.particles.push({
+                        x: x, y: y,
+                        vx: randomRange(-5, 5), vy: randomRange(-5, 5),
+                        life: 1.0, color: '#fff'
+                    });
+                }
+            }
+
+            update(dt) {
+                this.mice.forEach(m => m.update(dt, this));
+
+                // Input
+                if (this.input.justPressed) {
+                    this.mice.forEach(m => m.checkHit(this.input.x, this.input.y, this));
+                }
+
+                // Particles
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx; p.y += p.vy;
+                    p.life -= dt * 2;
+                    if (p.life <= 0) this.particles.splice(i, 1);
+                }
+            }
+
+            draw(ctx) {
+                // 1. Draw Mice (Behind Wall)
+                ctx.fillStyle = '#111'; // Inside hole darkness
+                ctx.fillRect(0, 0, this.width, this.height);
+
+                this.mice.forEach(m => m.draw(ctx));
+
+                // 2. Draw Wall Mask
+                // We want to draw a full wall, but CUT OUT the holes.
+                // We can do this by drawing the wall everywhere EXCEPT the holes.
+                // Or use composite operations.
+
+                ctx.save();
+                // Draw Wall
+                ctx.fillStyle = '#222';
+                // Use a path that is the whole screen MINUS the holes
+                ctx.beginPath();
+                ctx.rect(0, 0, this.width, this.height);
+
+                this.mice.forEach(m => {
+                    ctx.moveTo(m.hx + 60, m.hy);
+                    ctx.arc(m.hx, m.hy, 60, 0, Math.PI * 2, true); // Counter clockwise subtracts
+                });
+                ctx.fill();
+
+                // Add shading to holes for depth
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 4;
+                this.mice.forEach(m => {
+                    ctx.beginPath();
+                    ctx.arc(m.hx, m.hy, 60, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Inner shadow gradient?
+                    const grad = ctx.createRadialGradient(m.hx, m.hy, 40, m.hx, m.hy, 60);
+                    grad.addColorStop(0, 'transparent');
+                    grad.addColorStop(1, 'rgba(0,0,0,0.8)');
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                });
+
+                ctx.restore();
+
+                // Particles (Foreground)
+                this.particles.forEach(p => {
+                    ctx.globalAlpha = p.life;
+                    Draw.circle(ctx, p.x, p.y, 4, p.color);
+                    ctx.globalAlpha = 1;
+                });
+            }
+        }
+
+        new PeekGame();
+    </script>
+</body>
+
+</html>

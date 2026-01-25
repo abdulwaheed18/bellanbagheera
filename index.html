@@ -15,6 +15,81 @@
     <script src="https://unpkg.com/feather-icons"></script>
     <!-- MicroModal -->
     <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
+    <style>
+        /* In-line overrides for Game Card Polish */
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: block;
+        }
+
+        .game-card:hover,
+        .game-card:focus-visible {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-color: #FFD700;
+            z-index: 10;
+        }
+
+        .game-thumbnail {
+            height: 180px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(2px);
+        }
+
+        .game-card:hover .game-overlay {
+            opacity: 1;
+        }
+
+        .game-overlay i {
+            color: #FFD700;
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+        }
+
+        .game-info {
+            padding: 1.25rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        }
+
+        .game-info h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+    </style>
 </head>
 
 <body>
@@ -100,49 +175,59 @@
     <!-- Royal Games Section -->
     <section id="games-section" class="games-section container">
         <div class="section-header">
-            <h2>Royal Games</h2>
-            <p>Entertainment fit for a king (or queen).</p>
+            <h2>Royal Games (V2)</h2>
+            <p>Entertainment fit for a king (or queen). Remastered for maximum juice.</p>
         </div>
         <div class="games-grid">
             <!-- Game A -->
             <a href="bughunt.html" class="game-card">
-                <div class="game-thumbnail" style="background: radial-gradient(#FFD700, #B8860B);">
-                    <!-- Fallback if no img -->
+                <div class="game-thumbnail" style="background: radial-gradient(circle at center, #FFD700, #B8860B);">
                     <div class="game-overlay">
                         <i data-feather="play-circle"></i>
                     </div>
                 </div>
                 <div class="game-info">
                     <h3>The Fly-Zapper</h3>
-                    <p>For Bagheera: High-speed chase!</p>
+                    <p>For Bagheera: High-speed reflexes, screen shake, and bug splats!</p>
                 </div>
             </a>
 
             <!-- Game B -->
             <a href="gravity.html" class="game-card">
-                <div class="game-thumbnail" style="background: linear-gradient(45deg, #121212, #333);">
-                    <!-- Fallback -->
+                <div class="game-thumbnail" style="background: linear-gradient(135deg, #121212 0%, #333 100%);">
                     <div class="game-overlay">
-                        <i data-feather="play-circle"></i>
+                        <i data-feather="box"></i>
                     </div>
                 </div>
                 <div class="game-info">
                     <h3>Gravity Giggles</h3>
-                    <p>For Nawaab: Swipe and smash!</p>
+                    <p>For Nawaab: Realistic physics, stackable boxes, and satisfying crashes.</p>
                 </div>
             </a>
 
             <!-- Game C -->
             <a href="yarn.html" class="game-card">
-                <div class="game-thumbnail" style="background: radial-gradient(#0056b3, #002a5c);">
-                    <!-- Fallback -->
+                <div class="game-thumbnail" style="background: radial-gradient(circle at center, #0056b3, #001a33);">
                     <div class="game-overlay">
-                        <i data-feather="play-circle"></i>
+                        <i data-feather="activity"></i>
                     </div>
                 </div>
                 <div class="game-info">
                     <h3>Yarn Spinner</h3>
-                    <p>For Bella: Gentle loops.</p>
+                    <p>For Bella: Silky smooth spring physics and looping tails.</p>
+                </div>
+            </a>
+
+            <!-- Game D -->
+            <a href="peek.html" class="game-card">
+                <div class="game-thumbnail" style="background: linear-gradient(135deg, #111, #222);">
+                    <div class="game-overlay">
+                        <i data-feather="eye"></i>
+                    </div>
+                </div>
+                <div class="game-info">
+                    <h3>Whiskers in the Wall</h3>
+                    <p>Pure Instinct: Wait for the mouse to peek, then strike!</p>
                 </div>
             </a>
         </div>
@@ -199,6 +284,9 @@
     <script src="js/config.js"></script>
     <script src="js/notes-formatter.js"></script>
     <script src="js/script.js"></script>
+    <script>
+        feather.replace();
+    </script>
 </body>
 
 </html>
