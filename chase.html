@@ -114,8 +114,9 @@
 
         // --- Config ---
         const PREY_TYPES = {
-            rat: { name: 'Rat', icon: '🐀', env: 'wood', behavior: 'ground', speed: 6 },
-            spider: { name: 'Spider', icon: '🕷️', env: 'tile', behavior: 'ground', speed: 10 },
+            rat: { name: 'Rat', icon: '🐀', env: 'wood', behavior: 'ground', speed: 6, sprite: 'rat_sprite.png', frames: 4, width: 64, height: 64 },
+            spider: { name: 'Spider', icon: '🕷️', env: 'tile', behavior: 'ground', speed: 10, sprite: 'spider_sprite.png', frames: 4, width: 64, height: 64 },
+            cockroach: { name: 'Cockroach', icon: '🪳', env: 'tile', behavior: 'ground', speed: 12, sprite: 'cockroach_sprite.png', frames: 4, width: 64, height: 64 },
             bee: { name: 'Bee', icon: '🐝', env: 'sky', behavior: 'air', speed: 6 },
             water: { name: 'Water', icon: '💧', env: 'dark', behavior: 'fluid', speed: 0 },
             feather: { name: 'Feather', icon: '🪶', env: 'sky', behavior: 'float', speed: 2 },
@@ -131,9 +132,13 @@
                 this.holes = []; // For ground logic
                 this.bgPattern = null;
                 this.config = null;
+                this.loadedSprites = {};
+
+                this.locked = false;
 
                 this.setupExit();
                 this.setupMenu();
+                this.setupLockUI();
             }
 
             setupMenu() {
@@ -155,11 +160,19 @@
                 });
             }
 
-            startGame(typeKey) {
+            async startGame(typeKey) {
                 document.getElementById('menu').classList.add('hidden');
 
                 this.config = PREY_TYPES[typeKey];
+
+                // Preload sprite if needed
+                if (this.config.sprite && !this.loadedSprites[typeKey]) {
+                    UI.showToast("Loading assets...");
+                    await this.loadSprite(typeKey, this.config.sprite);
+                }
+
                 UI.createFullscreenButton();
+                this.showLockToggle();
                 UI.showToast("Hunt Begins!");
 
                 // Set Pattern
@@ -191,16 +204,128 @@
                 this.start((dt) => this.update(dt), (ctx) => this.draw(ctx));
             }
 
+            loadSprite(key, src) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous"; // Friendly for editing
+                    img.onload = () => {
+                        // Chroma Key Process
+                        // We assume top-left pixel is background color
+                        const c = document.createElement('canvas');
+                        c.width = img.width;
+                        c.height = img.height;
+                        const ctx = c.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        const imgData = ctx.getImageData(0, 0, c.width, c.height);
+                        const d = imgData.data;
+                        const rBg = d[0], gBg = d[1], bBg = d[2];
+
+                        // Simple chroma key distance
+                        for (let i = 0; i < d.length; i += 4) {
+                            const r = d[i], g = d[i + 1], b = d[i + 2];
+                            // Distance from bg color
+                            const dist = Math.sqrt((r - rBg) ** 2 + (g - gBg) ** 2 + (b - bBg) ** 2);
+                            if (dist < 30) { // Tolerance
+                                d[i + 3] = 0; // Transparent
+                            }
+                        }
+
+                        ctx.putImageData(imgData, 0, 0);
+
+                        // Create a new image from processed canvas
+                        const processedImg = new Image();
+                        processedImg.onload = () => {
+                            this.loadedSprites[key] = processedImg;
+                            resolve();
+                        };
+                        processedImg.src = c.toDataURL();
+                    };
+                    img.onerror = reject;
+                    img.src = `images/${src}`;
+                });
+            }
+
             setupExit() {
                 let taps = 0, timer;
                 const z = document.getElementById('exit-zone');
                 const trig = () => {
+                    if (this.locked) return; // Ignore if locked
                     taps++; clearTimeout(timer);
                     timer = setTimeout(() => taps = 0, 600);
                     if (taps >= 3) window.location.href = 'index.html';
                 };
                 z.addEventListener('touchstart', (e) => { e.preventDefault(); trig(); });
                 z.addEventListener('mousedown', trig);
+            }
+
+            setupLockUI() {
+                // Prevent gesture scrolling when locked
+                document.addEventListener('touchmove', (e) => {
+                    if (this.locked) e.preventDefault();
+                }, { passive: false });
+            }
+
+            showLockToggle() {
+                const btn = document.createElement('button');
+                btn.id = 'lock-btn';
+                btn.innerHTML = '🔓';
+                btn.style.cssText = `
+                    position: absolute; top: 20px; left: 20px;
+                    background: rgba(255,255,255,0.2); border: none;
+                    font-size: 24px; width: 50px; height: 50px; border-radius: 50%;
+                    cursor: pointer; z-index: 1000;
+                `;
+                document.body.appendChild(btn);
+
+                let holdTimer;
+                const toggleLock = (forceLock) => {
+                    if (forceLock === true || !this.locked) {
+                        // Lock
+                        this.locked = true;
+                        btn.innerHTML = '🔒';
+                        btn.style.background = 'rgba(255, 100, 100, 0.5)';
+                        UI.showToast("LOCKED: Long press to unlock");
+
+                        // Enter FS
+                        if (document.documentElement.requestFullscreen) {
+                            document.documentElement.requestFullscreen().catch(() => { });
+                        }
+
+                        // Hide other UI
+                        document.getElementById('exit-zone').style.display = 'none';
+                        const fsBtn = document.querySelector('button[style*="right: 20px"]'); // Hacky but works for now
+                        if (fsBtn) fsBtn.style.display = 'none';
+
+                    } else {
+                        // Unlock
+                        this.locked = false;
+                        btn.innerHTML = '🔓';
+                        btn.style.background = 'rgba(255,255,255,0.2)';
+                        UI.showToast("UNLOCKED");
+
+                        // Show other UI
+                        document.getElementById('exit-zone').style.display = 'block';
+                        const fsBtn = document.querySelector('button[style*="right: 20px"]');
+                        if (fsBtn) fsBtn.style.display = 'block';
+                    }
+                };
+
+                // Click to Lock
+                btn.onclick = () => {
+                    if (!this.locked) toggleLock(true);
+                };
+
+                // Long press to Unlock
+                btn.onmousedown = btn.ontouchstart = () => {
+                    if (this.locked) {
+                        holdTimer = setTimeout(() => toggleLock(false), 2000); // 2s hold
+                        UI.showToast("Keep holding...");
+                    }
+                };
+                btn.onmouseup = btn.onmouseleave = btn.ontouchend = () => {
+                    clearTimeout(holdTimer);
+                };
             }
 
             // --- Spawners ---
@@ -217,8 +342,9 @@
                     vx: Math.cos(angle) * this.config.speed,
                     vy: Math.sin(angle) * this.config.speed,
                     state: 'run',
-                    angle: angle,
-                    life: 1 // for alpha
+                    angle: angle + Math.PI / 2, // Rotate to face direction (assuming sprite points UP)
+                    life: 1, // for alpha
+                    animTimer: 0
                 });
             }
 
@@ -228,7 +354,8 @@
                     x: x, y: -20,
                     vx: 0, vy: 0,
                     state: 'fall',
-                    scale: 1
+                    scale: 1,
+                    animTimer: 0
                 });
             }
 
@@ -237,7 +364,8 @@
                     x: x, y: y,
                     vx: 0, vy: 0,
                     timer: randomRange(0, 10),
-                    state: 'fly'
+                    state: 'fly',
+                    animTimer: 0
                 });
             }
 
@@ -255,6 +383,7 @@
             updatePrey(dt) {
                 for (let i = this.preyList.length - 1; i >= 0; i--) {
                     let p = this.preyList[i];
+                    p.animTimer += dt;
 
                     if (this.config.behavior === 'ground') {
                         // Move to target
@@ -325,6 +454,15 @@
                             // Just teleport for fun chase
                             p.x = randomRange(this.width * 0.2, this.width * 0.8);
                             p.y = randomRange(this.height * 0.2, this.height * 0.8);
+
+                            // Recalculate angle to target if we just teleported blindly, 
+                            // but simpler to just respawn it correctly or let it run to a new spot
+                            // For simplicity, let's keep it running towards original target but from new spot
+                            const angle = Math.atan2(p.target.y - p.y, p.target.x - p.x);
+                            p.vx = Math.cos(angle) * this.config.speed;
+                            p.vy = Math.sin(angle) * this.config.speed;
+                            p.angle = angle + Math.PI / 2;
+
                         } else {
                             p.x = randomRange(50, this.width - 50);
                             p.y = randomRange(50, this.height - 50);
@@ -378,10 +516,11 @@
                     if (this.config.behavior === 'ground') {
                         // Rotation for running
                         ctx.rotate(p.angle);
+
                         // Drop shadow to ground it
                         ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                        ctx.shadowBlur = 10;
-                        ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 10;
+                        ctx.shadowBlur = 5;
+                        ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 5;
                     }
 
                     if (this.config.behavior === 'air') {
@@ -390,10 +529,23 @@
                         ctx.shadowOffsetY = 40; // High shadow
                     }
 
-                    ctx.font = "60px sans-serif";
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(this.config.icon, 0, 0);
+                    if (this.config.sprite && this.loadedSprites[Object.keys(PREY_TYPES).find(key => PREY_TYPES[key] === this.config)]) {
+                        const img = this.loadedSprites[Object.keys(PREY_TYPES).find(key => PREY_TYPES[key] === this.config)];
+                        // Animation Logic
+                        // Assume frames are horizontal
+                        const frameIndex = Math.floor(p.animTimer * 10) % this.config.frames;
+                        const fw = img.width / this.config.frames;
+                        const fh = img.height;
+
+                        ctx.drawImage(img, frameIndex * fw, 0, fw, fh, -fw / 2, -fh / 2, fw, fh);
+
+                    } else {
+                        // Fallback to emoji
+                        ctx.font = "60px sans-serif";
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(this.config.icon, 0, 0);
+                    }
 
                     ctx.restore();
                 });
