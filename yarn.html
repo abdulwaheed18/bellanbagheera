@@ -126,13 +126,11 @@
             rotation: 0
         };
 
-        let threadPoints = [];
         const CENTER = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         const SPRING_K = 0.005; // Looser spring for slow drag
         const FRICTION = 0.92;
 
         let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -182,10 +180,6 @@
             // Draw line from center to ball, maybe with some "wobble" history
             ctx.beginPath();
             ctx.moveTo(CENTER.x, CENTER.y);
-
-            // Catmull-Rom or Quadratic curve for "slack"?
-            // For now, simple line that fades is fine, but let's make it look like yarn
-            // We can draw a sine wave along the path
 
             const dist = Math.hypot(ball.x - CENTER.x, ball.y - CENTER.y);
             const angle = Math.atan2(ball.y - CENTER.y, ball.x - CENTER.x);
@@ -248,23 +242,39 @@
         }
 
         // --- Input ---
-        function handleStart(x, y) {
+        function requestFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => { });
+            }
+        }
+
+        function handleStart(clientX, clientY) {
+            requestFullscreen();
+
+            const rect = canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
             const dist = Math.hypot(x - ball.x, y - ball.y);
-            if (dist < ball.radius + 50) {
+            // Increased hit radius for easier grab
+            if (dist < ball.radius + 80) {
                 isDragging = true;
                 ball.vx = 0;
                 ball.vy = 0;
-                // Move ball to finger immediately
                 ball.x = x;
                 ball.y = y;
             }
         }
 
-        function handleMove(x, y) {
+        function handleMove(clientX, clientY) {
             if (isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                const x = clientX - rect.left;
+                const y = clientY - rect.top;
+
                 ball.x = x;
                 ball.y = y;
-                ball.rotation += 0.1; // Spin while dragging
+                ball.rotation += 0.1;
             }
         }
 
@@ -277,10 +287,12 @@
         window.addEventListener('mouseup', handleEnd);
 
         window.addEventListener('touchstart', e => {
+            // e.preventDefault(); // allow exit
             handleStart(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: false });
         window.addEventListener('touchmove', e => {
-            e.preventDefault();
+            // Block scrolling while playing
+            if (isDragging) e.preventDefault();
             handleMove(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: false });
         window.addEventListener('touchend', handleEnd);

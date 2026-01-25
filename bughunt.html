@@ -193,22 +193,19 @@
             // State Machine
             if (bug.state === BEHAVIOR_NORMAL) {
                 if (bug.timer > bug.nextChange) {
-                    // Switch to FREEZE
                     bug.state = BEHAVIOR_FREEZE;
                     bug.timer = 0;
-                    bug.nextChange = 30; // Freeze for 0.5s (30 frames)
+                    bug.nextChange = 30;
                 }
             } else if (bug.state === BEHAVIOR_FREEZE) {
                 if (bug.timer > bug.nextChange) {
-                    // Switch to BURST
                     bug.state = BEHAVIOR_BURST;
                     bug.timer = 0;
-                    bug.nextChange = 45; // Burst for ~0.75s
-                    randomizeSpeed(3); // 3x Speed
+                    bug.nextChange = 45;
+                    randomizeSpeed(3);
                 }
             } else if (bug.state === BEHAVIOR_BURST) {
                 if (bug.timer > bug.nextChange) {
-                    // Back to NORMAL
                     bug.state = BEHAVIOR_NORMAL;
                     bug.timer = 0;
                     bug.nextChange = 120 + Math.random() * 120;
@@ -218,23 +215,33 @@
 
             // Movement logic
             if (bug.state === BEHAVIOR_FREEZE) {
-                // Jitter
                 bug.x += (Math.random() - 0.5) * 2;
                 bug.y += (Math.random() - 0.5) * 2;
             } else {
                 bug.x += bug.speedX;
                 bug.y += bug.speedY;
 
-                // Bounce
-                if (bug.x + bug.radius > canvas.width || bug.x - bug.radius < 0) {
-                    bug.speedX *= -1;
-                    if (bug.state === BEHAVIOR_BURST) randomizeSpeed(3);
-                    else randomizeSpeed(1);
+                // STRICT Bounce with padding
+                const padding = bug.radius + 15;
+
+                if (bug.x + padding > canvas.width) {
+                    bug.x = canvas.width - padding;
+                    bug.speedX = -Math.abs(bug.speedX);
+                    if (bug.state === BEHAVIOR_BURST) randomizeSpeed(3); else randomizeSpeed(1);
+                } else if (bug.x - padding < 0) {
+                    bug.x = padding;
+                    bug.speedX = Math.abs(bug.speedX);
+                    if (bug.state === BEHAVIOR_BURST) randomizeSpeed(3); else randomizeSpeed(1);
                 }
-                if (bug.y + bug.radius > canvas.height || bug.y - bug.radius < 0) {
-                    bug.speedY *= -1;
-                    if (bug.state === BEHAVIOR_BURST) randomizeSpeed(3);
-                    else randomizeSpeed(1);
+
+                if (bug.y + padding > canvas.height) {
+                    bug.y = canvas.height - padding;
+                    bug.speedY = -Math.abs(bug.speedY);
+                    if (bug.state === BEHAVIOR_BURST) randomizeSpeed(3); else randomizeSpeed(1);
+                } else if (bug.y - padding < 0) {
+                    bug.y = padding;
+                    bug.speedY = Math.abs(bug.speedY);
+                    if (bug.state === BEHAVIOR_BURST) randomizeSpeed(3); else randomizeSpeed(1);
                 }
             }
 
@@ -317,6 +324,8 @@
 
         // Input Handling
         function handleInput(x, y) {
+            requestFullscreen(); // Ensure fullscreen
+
             pawTrail.push({ x, y });
 
             const dist = Math.hypot(x - bug.x, y - bug.y);

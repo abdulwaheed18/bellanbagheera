@@ -90,7 +90,7 @@
         const GRAVITY = 0.5;
         const FRICTION = 0.95;
         const BOUNCE = 0.4;
-        const GROUND_Y = window.innerHeight; // Bottom of screen
+        let GROUND_Y = window.innerHeight; // Bottom of screen
 
         // Ledge
         let ledge = {
@@ -249,17 +249,40 @@
         }
 
         // --- Input ---
-        function handleInput(x, y, dx, dy) {
-            objects.forEach(obj => {
-                // Check if touch is near object
-                const dist = Math.hypot(x - obj.x, y - obj.y);
-                if (dist < 100) { // Generous hit area
-                    // Apply impulse
-                    obj.vx += dx * 0.5; // Scale down swipe power
-                    obj.vy += dy * 0.5;
-                    obj.va += dx * 0.05; // Spin it
+        function requestFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => { });
+            }
+        }
 
-                    // Wake up physics slightly if sitting still
+        function handleInput(clientX, clientY, dx, dy) {
+            requestFullscreen();
+
+            const rect = canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            objects.forEach(obj => {
+                const dist = Math.hypot(x - obj.x, y - obj.y);
+                if (dist < 120) { // Increased hit area
+                    // Apply impulse
+                    if (dx !== undefined && dy !== undefined) {
+                        obj.vx += dx * 0.5;
+                        obj.vy += dy * 0.5;
+                        obj.va += dx * 0.05;
+                    } else {
+                        // Tap nudges away from center of tap
+                        let nudgeX = obj.x - x;
+                        let nudgeY = obj.y - y;
+                        const len = Math.hypot(nudgeX, nudgeY);
+                        if (len > 0) {
+                            nudgeX /= len;
+                            nudgeY /= len;
+                            obj.vx += nudgeX * 10;
+                            obj.vy += nudgeY * 10 - 5; // Kick up
+                        }
+                    }
+
                     if (Math.abs(obj.vx) < 0.1) obj.vx = (Math.random() - 0.5) * 2;
                 }
             });
@@ -268,32 +291,36 @@
         let lastX = 0, lastY = 0;
 
         window.addEventListener('touchstart', e => {
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
-            // Also check for tap to nudge
-            handleInput(lastX, lastY, (Math.random() - 0.5) * 10, -5); // Small nudge on tap
+            // e.preventDefault();
+            const touch = e.touches[0];
+            lastX = touch.clientX;
+            lastY = touch.clientY;
+            handleInput(lastX, lastY); // Tap check
         }, { passive: false });
 
         window.addEventListener('touchmove', e => {
-            e.preventDefault();
-            const x = e.touches[0].clientX;
-            const y = e.touches[0].clientY;
+            // e.preventDefault(); 
+            const touch = e.touches[0];
+            const x = touch.clientX;
+            const y = touch.clientY;
             const dx = x - lastX;
             const dy = y - lastY;
 
-            handleInput(x, y, dx, dy);
+            if (Math.hypot(dx, dy) > 2) {
+                handleInput(x, y, dx, dy);
+            }
 
             lastX = x;
             lastY = y;
         }, { passive: false });
 
-        // Mouse support for testing
+        // Mouse support
         let isDragging = false;
         window.addEventListener('mousedown', e => {
             isDragging = true;
             lastX = e.clientX;
             lastY = e.clientY;
-            handleInput(lastX, lastY, (Math.random() - 0.5) * 10, -5);
+            handleInput(lastX, lastY);
         });
         window.addEventListener('mousemove', e => {
             if (!isDragging) return;
@@ -324,13 +351,13 @@
             handleExitTap();
         });
 
-        gameLoop();
-
-        // Auto Reset if things get boring (optional, maybe not for now)
+        // Auto Reset
         setInterval(() => {
             const allFalling = objects.every(o => o.y > window.innerHeight + 100);
             if (allFalling) initLevel();
         }, 2000);
+
+        gameLoop();
 
     </script>
 </body>
