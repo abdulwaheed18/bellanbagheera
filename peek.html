@@ -55,7 +55,7 @@
     <canvas id="gameCanvas"></canvas>
 
     <script type="module">
-        import { GameEngine, Draw, randomRange } from './game-utils.js';
+        import { GameEngine, Draw, randomRange, UI } from './game-utils.js';
 
         const STATE_IDLE = 0;
         const STATE_TEASE = 1;
@@ -214,6 +214,7 @@
         class PeekGame extends GameEngine {
             constructor() {
                 super('gameCanvas');
+                UI.createFullscreenButton();
                 this.mice = [];
                 this.particles = [];
 

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BNB Ultimate Chase V4 🐾</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #121212;
+            user-select: none;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+
+        #exit-zone {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+        }
+
+        /* Menu Overlay */
+        #menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #menu h1 {
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 700px;
+            width: 90%;
+        }
+
+        .prey-btn {
+            background: #222;
+            border: 2px solid #333;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prey-btn:active {
+            transform: scale(0.95);
+        }
+
+        .prey-btn.selected {
+            border-color: #FFD700;
+            background: #333;
+        }
+
+        .prey-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            z-index: 2;
+        }
+
+        .prey-name {
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="menu">
+        <h1>Select Prey</h1>
+        <div class="grid" id="prey-grid"></div>
+    </div>
+    <div id="exit-zone"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script type="module">
+        import { GameEngine, Draw, randomRange, UI, Patterns } from './game-utils.js';
+
+        // --- Config ---
+        const PREY_TYPES = {
+            rat: { name: 'Rat', icon: '🐀', env: 'wood', behavior: 'ground', speed: 6 },
+            spider: { name: 'Spider', icon: '🕷️', env: 'tile', behavior: 'ground', speed: 10 },
+            bee: { name: 'Bee', icon: '🐝', env: 'sky', behavior: 'air', speed: 6 },
+            water: { name: 'Water', icon: '💧', env: 'dark', behavior: 'fluid', speed: 0 },
+            feather: { name: 'Feather', icon: '🪶', env: 'sky', behavior: 'float', speed: 2 },
+            butterfly: { name: 'Butterfly', icon: '🦋', env: 'sky', behavior: 'flutter', speed: 4 },
+        };
+
+        class ChaseGame extends GameEngine {
+            constructor() {
+                super('gameCanvas');
+
+                this.preyList = [];
+                this.particles = [];
+                this.holes = []; // For ground logic
+                this.bgPattern = null;
+                this.config = null;
+
+                this.setupExit();
+                this.setupMenu();
+            }
+
+            setupMenu() {
+                const grid = document.getElementById('prey-grid');
+                Object.keys(PREY_TYPES).forEach(key => {
+                    const p = PREY_TYPES[key];
+                    const btn = document.createElement('div');
+                    btn.className = 'prey-btn';
+                    btn.innerHTML = `<span class="prey-icon">${p.icon}</span><span class="prey-name">${p.name}</span>`;
+
+                    // Mini preview bg
+                    if (p.env === 'wood') btn.style.background = '#3e2723';
+                    if (p.env === 'sky') btn.style.background = '#87CEEB';
+                    if (p.env === 'tile') btn.style.background = '#eee';
+                    if (p.env === 'tile') btn.style.color = '#333';
+
+                    btn.onclick = () => this.startGame(key);
+                    grid.appendChild(btn);
+                });
+            }
+
+            startGame(typeKey) {
+                document.getElementById('menu').classList.add('hidden');
+
+                this.config = PREY_TYPES[typeKey];
+                UI.createFullscreenButton();
+                UI.showToast("Hunt Begins!");
+
+                // Set Pattern
+                if (this.config.env === 'wood') this.bgPattern = Patterns.createWood(this.width, this.height);
+                if (this.config.env === 'tile') this.bgPattern = Patterns.createTiles(this.width, this.height);
+                if (this.config.env === 'sky') this.bgPattern = Patterns.createSky(this.width, this.height);
+                if (this.config.env === 'dark') this.bgPattern = Patterns.createDark(this.width, this.height);
+
+                // Init Logic
+                this.preyList = [];
+                this.holes = [];
+
+                if (this.config.behavior === 'ground') {
+                    // Create Holes
+                    this.holes.push({ x: 100, y: 100 });
+                    this.holes.push({ x: this.width - 100, y: this.height - 100 });
+                    this.holes.push({ x: 100, y: this.height - 100 });
+                    this.holes.push({ x: this.width - 100, y: 100 });
+                    // Spawn one immediately
+                    this.spawnGroundPrey();
+                } else if (this.config.behavior === 'fluid') {
+                    // Start dripping
+                    setInterval(() => this.spawnWaterDrop(), 800);
+                } else {
+                    // Air/Float: Spawn center
+                    this.spawnAirPrey(this.width / 2, this.height / 2);
+                }
+
+                this.start((dt) => this.update(dt), (ctx) => this.draw(ctx));
+            }
+
+            setupExit() {
+                let taps = 0, timer;
+                const z = document.getElementById('exit-zone');
+                const trig = () => {
+                    taps++; clearTimeout(timer);
+                    timer = setTimeout(() => taps = 0, 600);
+                    if (taps >= 3) window.location.href = 'index.html';
+                };
+                z.addEventListener('touchstart', (e) => { e.preventDefault(); trig(); });
+                z.addEventListener('mousedown', trig);
+            }
+
+            // --- Spawners ---
+            spawnGroundPrey() {
+                const startHole = this.holes[Math.floor(Math.random() * this.holes.length)];
+                let endHole = this.holes[Math.floor(Math.random() * this.holes.length)];
+                while (endHole === startHole) endHole = this.holes[Math.floor(Math.random() * this.holes.length)];
+
+                const angle = Math.atan2(endHole.y - startHole.y, endHole.x - startHole.x);
+
+                this.preyList.push({
+                    x: startHole.x, y: startHole.y,
+                    target: endHole,
+                    vx: Math.cos(angle) * this.config.speed,
+                    vy: Math.sin(angle) * this.config.speed,
+                    state: 'run',
+                    angle: angle,
+                    life: 1 // for alpha
+                });
+            }
+
+            spawnWaterDrop() {
+                const x = randomRange(50, this.width - 50);
+                this.preyList.push({
+                    x: x, y: -20,
+                    vx: 0, vy: 0,
+                    state: 'fall',
+                    scale: 1
+                });
+            }
+
+            spawnAirPrey(x, y) {
+                this.preyList.push({
+                    x: x, y: y,
+                    vx: 0, vy: 0,
+                    timer: randomRange(0, 10),
+                    state: 'fly'
+                });
+            }
+
+            // --- Logic ---
+            update(dt) {
+                // Input Hit Test
+                if (this.input.justPressed) {
+                    this.checkHit();
+                }
+
+                this.updatePrey(dt);
+                this.updateParticles(dt);
+            }
+
+            updatePrey(dt) {
+                for (let i = this.preyList.length - 1; i >= 0; i--) {
+                    let p = this.preyList[i];
+
+                    if (this.config.behavior === 'ground') {
+                        // Move to target
+                        const dist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
+                        if (dist < 20) {
+                            // Reached hole
+                            this.preyList.splice(i, 1);
+                            setTimeout(() => this.spawnGroundPrey(), randomRange(500, 1500));
+                        } else {
+                            p.x += p.vx;
+                            p.y += p.vy;
+                            // Random jitter
+                            p.x += randomRange(-2, 2);
+                        }
+                    }
+                    else if (this.config.behavior === 'fluid') {
+                        p.vy += 0.2; // Gravity
+                        p.y += p.vy;
+
+                        // Splash floor
+                        if (p.y > this.height) {
+                            this.audio.playTone(400, 'sine', 0.1, 0.1); // plop
+                            this.spawnParticles(p.x, this.height, '#aaf');
+                            this.preyList.splice(i, 1);
+                        }
+                    }
+                    else if (this.config.behavior === 'air' || this.config.behavior === 'flutter') {
+                        p.timer += dt * 2;
+                        p.x += Math.sin(p.timer) * 3;
+                        p.y += Math.cos(p.timer * 0.7) * 2;
+
+                        // Keep on screen
+                        if (p.x < 50) p.x += 2;
+                        if (p.x > this.width - 50) p.x -= 2;
+                        if (p.y < 50) p.y += 2;
+                        if (p.y > this.height - 50) p.y -= 2;
+                    }
+                    else if (this.config.behavior === 'float') {
+                        p.vy += 0.05; // light grav
+                        p.vx += Math.sin(Date.now() / 1000) * 0.1;
+                        p.y += p.vy;
+                        p.x += p.vx;
+
+                        if (p.y > this.height + 50) {
+                            p.y = -50; p.vy = 0; p.x = randomRange(50, this.width - 50);
+                        }
+                    }
+                }
+            }
+
+            checkHit() {
+                // If fluid, spawn new drop on tap
+                if (this.config.behavior === 'fluid') {
+                    this.spawnWaterDrop(); // "Leaking"
+                    return;
+                }
+
+                let hit = false;
+                this.preyList.forEach(p => {
+                    const dist = Math.hypot(this.input.x - p.x, this.input.y - p.y);
+                    if (dist < 100) { // Generous hit
+                        hit = true;
+                        this.audio.playPop();
+                        this.spawnParticles(p.x, p.y, '#FFD700');
+
+                        if (this.config.behavior === 'ground') {
+                            // Scared! Speed up or reroute?
+                            // Just teleport for fun chase
+                            p.x = randomRange(this.width * 0.2, this.width * 0.8);
+                            p.y = randomRange(this.height * 0.2, this.height * 0.8);
+                        } else {
+                            p.x = randomRange(50, this.width - 50);
+                            p.y = randomRange(50, this.height - 50);
+                        }
+                    }
+                });
+
+                if (hit) UI.showToast("Gotcha!");
+            }
+
+            spawnParticles(x, y, color = '#fff') {
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push({ x, y, vx: randomRange(-5, 5), vy: randomRange(-5, 5), life: 1, color });
+                }
+            }
+
+            updateParticles(dt) {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    let p = this.particles[i];
+                    p.x += p.vx; p.y += p.vy;
+                    p.life -= dt * 3;
+                    if (p.life <= 0) this.particles.splice(i, 1);
+                }
+            }
+
+            draw(ctx) {
+                // Pattern BG
+                if (this.bgPattern) {
+                    ctx.fillStyle = this.bgPattern;
+                    ctx.fillRect(0, 0, this.width, this.height);
+                } else {
+                    ctx.fillStyle = this.config.env === 'dark' ? '#050510' : '#222';
+                    ctx.fillRect(0, 0, this.width, this.height);
+                }
+
+                // Draw Holes for ground prey
+                if (this.config.behavior === 'ground') {
+                    this.holes.forEach(h => {
+                        ctx.fillStyle = '#000';
+                        ctx.beginPath();
+                        ctx.ellipse(h.x, h.y, 40, 20, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+
+                // Draw Prey
+                this.preyList.forEach(p => {
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+
+                    if (this.config.behavior === 'ground') {
+                        // Rotation for running
+                        ctx.rotate(p.angle);
+                        // Drop shadow to ground it
+                        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                        ctx.shadowBlur = 10;
+                        ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 10;
+                    }
+
+                    if (this.config.behavior === 'air') {
+                        ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                        ctx.shadowBlur = 20;
+                        ctx.shadowOffsetY = 40; // High shadow
+                    }
+
+                    ctx.font = "60px sans-serif";
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.config.icon, 0, 0);
+
+                    ctx.restore();
+                });
+
+                // Particles
+                this.particles.forEach(p => {
+                    ctx.globalAlpha = p.life;
+                    Draw.circle(ctx, p.x, p.y, 5, p.color);
+                    ctx.globalAlpha = 1;
+                });
+            }
+        }
+
+        new ChaseGame();
+    </script>
+</body>
+
+</html>
