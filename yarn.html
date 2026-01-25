@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BNB Yarn Spinner 🐾</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #121212;
+            font-family: sans-serif;
+            touch-action: none;
+            cursor: none;
+        }
+
+        #game-ui {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .bnb-logo {
+            font-weight: 800;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #exit-zone {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-ui">
+        <div class="bnb-logo">BNB Yarn Spinner</div>
+    </div>
+    <div id="exit-zone"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const exitZone = document.getElementById('exit-zone');
+
+        // --- Audio ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Brown noise / Purr generator
+        let purrNode = null;
+        let purrGain = null;
+
+        function initAudio() {
+            if (purrNode) return;
+            // Create buffer for noise
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = output[i];
+                output[i] *= 3.5;
+            }
+
+            purrNode = audioCtx.createBufferSource();
+            purrNode.buffer = buffer;
+            purrNode.loop = true;
+
+            // Lowpass filter for "Purr"
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 100;
+
+            purrGain = audioCtx.createGain();
+            purrGain.gain.value = 0;
+
+            purrNode.connect(filter);
+            filter.connect(purrGain);
+            purrGain.connect(audioCtx.destination);
+            purrNode.start();
+        }
+        let lastOut = 0;
+
+        function setPurrVolume(vol) {
+            if (!purrGain) return;
+            // Smooth transition
+            purrGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.1);
+        }
+
+        // Resume context on interaction
+        window.addEventListener('touchstart', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            initAudio();
+        }, { once: true });
+        window.addEventListener('mousedown', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            initAudio();
+        }, { once: true });
+
+
+        // --- Physics ---
+        let ball = {
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+            radius: 50,
+            vx: 0,
+            vy: 0,
+            rotation: 0
+        };
+
+        let threadPoints = [];
+        const CENTER = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        const SPRING_K = 0.005; // Looser spring for slow drag
+        const FRICTION = 0.92;
+
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            CENTER.x = window.innerWidth / 2;
+            CENTER.y = window.innerHeight / 2;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- Loop ---
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear screen
+
+            if (!isDragging) {
+                // Spring logic to center
+                const dx = CENTER.x - ball.x;
+                const dy = CENTER.y - ball.y;
+
+                ball.vx += dx * SPRING_K;
+                ball.vy += dy * SPRING_K;
+
+                // Friction
+                ball.vx *= FRICTION;
+                ball.vy *= FRICTION;
+
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+
+                // Rotation based on movement
+                const speed = Math.hypot(ball.vx, ball.vy);
+                ball.rotation += speed * 0.05;
+
+                // Audio Volume based on speed
+                setPurrVolume(Math.min(speed * 0.02, 0.4));
+            } else {
+                setPurrVolume(0.5); // Louder when interacting
+            }
+
+            drawThread();
+            drawBall();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function drawThread() {
+            // Draw line from center to ball, maybe with some "wobble" history
+            ctx.beginPath();
+            ctx.moveTo(CENTER.x, CENTER.y);
+
+            // Catmull-Rom or Quadratic curve for "slack"?
+            // For now, simple line that fades is fine, but let's make it look like yarn
+            // We can draw a sine wave along the path
+
+            const dist = Math.hypot(ball.x - CENTER.x, ball.y - CENTER.y);
+            const angle = Math.atan2(ball.y - CENTER.y, ball.x - CENTER.x);
+
+            ctx.save();
+            ctx.translate(CENTER.x, CENTER.y);
+            ctx.rotate(angle);
+
+            ctx.strokeStyle = '#80aaff';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+
+            // Wavy string
+            for (let i = 0; i < dist; i += 10) {
+                const wave = Math.sin(i * 0.1) * 5;
+                ctx.lineTo(i, wave);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawBall() {
+            ctx.save();
+            ctx.translate(ball.x, ball.y);
+            ctx.rotate(ball.rotation);
+
+            // Ball Body
+            ctx.beginPath();
+            ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#0056b3'; // Blue
+            ctx.fill();
+
+            // Yarn Texture (Lines)
+            ctx.strokeStyle = '#3385ff'; // Lighter blue
+            ctx.lineWidth = 2;
+
+            for (let i = 0; i < 10; i++) {
+                ctx.beginPath();
+                // Randomish loops
+                const r = ball.radius;
+                const a1 = i * (Math.PI / 5);
+                const a2 = a1 + Math.PI;
+                ctx.arc(0, 0, r - 5, a1, a2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(-r + 10, i * 5 - 20);
+                ctx.lineTo(r - 10, i * 5 - 20);
+                ctx.stroke();
+            }
+
+            // Highlight
+            ctx.beginPath();
+            ctx.arc(-15, -15, 10, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // --- Input ---
+        function handleStart(x, y) {
+            const dist = Math.hypot(x - ball.x, y - ball.y);
+            if (dist < ball.radius + 50) {
+                isDragging = true;
+                ball.vx = 0;
+                ball.vy = 0;
+                // Move ball to finger immediately
+                ball.x = x;
+                ball.y = y;
+            }
+        }
+
+        function handleMove(x, y) {
+            if (isDragging) {
+                ball.x = x;
+                ball.y = y;
+                ball.rotation += 0.1; // Spin while dragging
+            }
+        }
+
+        function handleEnd() {
+            isDragging = false;
+        }
+
+        window.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handleEnd);
+
+        window.addEventListener('touchstart', e => {
+            handleStart(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+        window.addEventListener('touchmove', e => {
+            e.preventDefault();
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+        window.addEventListener('touchend', handleEnd);
+
+        // Exit Logic
+        let taps = 0;
+        let tapTimer;
+
+        function handleExitTap() {
+            taps++;
+            if (tapTimer) clearTimeout(tapTimer);
+            tapTimer = setTimeout(() => taps = 0, 600);
+            if (taps >= 3) window.location.href = 'index.html';
+        }
+
+        exitZone.addEventListener('mousedown', handleExitTap);
+        exitZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleExitTap();
+        });
+
+        ball.x = CENTER.x;
+        ball.y = CENTER.y;
+        gameLoop();
+
+    </script>
+</body>
+
+</html>
