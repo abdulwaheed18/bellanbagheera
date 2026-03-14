@@ -605,6 +605,38 @@ img {
     color: var(--color-primary);
 }
 
+button.txt-btn {
+    background: transparent;
+    color: inherit;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: inherit;
+}
+
+@media (hover: none) {
+    .edit-card__meta-actions,
+    .love-btn {
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+    }
+}
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: #000;
+    padding: 8px 16px;
+    font-weight: bold;
+    z-index: 1000;
+    transition: top 0.2s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
 /* --- Footer (Minimalist) --- */
 .footer-minimal {
     border-top: var(--border-subtle);
@@ -755,12 +787,8 @@ img {
     color: white;
 }
 
-/* Instagram Embed Fixes for Dark Mode */
-.instagram-media {
-    background: white !important;
-    /* Proper bg for iframe */
-    border-radius: 4px;
-}
+
+
 
 .modal__content a {
     color: var(--color-primary);
@@ -1489,3 +1517,86 @@ img {
     pointer-events: none;
     opacity: 0.7;
 }
+
+/* Phase 1.2 Additions */
+html {
+    scroll-behavior: smooth;
+}
+
+.hero-cta {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    margin-top: 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--color-primary);
+    color: #050505;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-soft);
+}
+
+.hero-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(212, 175, 55, 0.4);
+}
+
+.whatsapp-float {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 56px;
+    height: 56px;
+    background-color: #25d366;
+    border-radius: 50%;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+}
+
+.whatsapp-float img {
+    width: 32px;
+    height: 32px;
+    filter: brightness(0) invert(1);
+}
+
+/* Skeletons */
+.skeleton-card {
+    background: #0a0a0a;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    height: 100%;
+}
+.skeleton-img {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: #111;
+}
+.skeleton-text {
+    height: 16px;
+    background: #111;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+.skeleton-text.short {
+    width: 60%;
+}
+.shimmer {
+    background: linear-gradient(90deg, #111 25%, #222 50%, #111 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+@keyframes shimmer {
+    to { background-position: -200% 0; }
+}

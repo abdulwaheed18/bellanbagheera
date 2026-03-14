@@ -4,111 +4,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BNB | BElla Nawaab Bagheera</title>
+    <title>BNB | Bella Nawaab Bagheera — Curated Pet Products & Cat Games</title>
+    <meta name="description" content="Discover curated toys, treats, and treasures personally tested by Bella, Nawaab & Bagheera. Real feedback from real cats, plus interactive cat enrichment games.">
     <link rel="stylesheet" href="style.css">
-    <!-- Open Graph & PWA -->
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Bella Nawaab Bagheera — Curated Pet Products">
+    <meta property="og:description" content="Toys, treats, and treasures personally tested by three royal cats. Real feedback, real recommendations.">
+    <meta property="og:image" content="images/profile_avatar.png">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bella Nawaab Bagheera — Curated Pet Products">
+    <meta name="twitter:description" content="Toys, treats, and treasures personally tested by three royal cats.">
+    <meta name="twitter:image" content="images/profile_avatar.png">
+
+    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#050505">
-    <link rel="apple-touch-icon" href="images/profile_avatar.png">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
 
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
     <!-- MicroModal -->
     <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
-    <style>
-        /* In-line overrides for Game Card Polish */
-        .game-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            overflow: hidden;
-            text-decoration: none;
-            color: inherit;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: block;
-        }
 
-        .game-card:hover,
-        .game-card:focus-visible {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border-color: #FFD700;
-            z-index: 10;
-        }
-
-        .game-thumbnail {
-            height: 180px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .game-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-            backdrop-filter: blur(2px);
-        }
-
-        .game-card:hover .game-overlay {
-            opacity: 1;
-        }
-
-        .game-overlay i {
-            color: #FFD700;
-            width: 48px;
-            height: 48px;
-            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
-        }
-
-        .game-info {
-            padding: 1.25rem;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-        }
-
-        .game-info h3 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: #FFD700;
-            margin-bottom: 0.5rem;
-        }
-
-        .game-info p {
-            margin: 0;
-            font-size: 0.9rem;
-            color: #aaa;
-            line-height: 1.4;
-        }
-    </style>
 </head>
 
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- Magazine Header -->
+    <!-- Magazine Header / Global Nav -->
     <header class="header">
         <div class="announcement-bar">
-            <a href="https://api.whatsapp.com/send?phone=919336536492" target="_blank">For Collabs, Please WhatsApp for
-                quick connect (NO Call)</a>
+            <a href="https://api.whatsapp.com/send?phone=919336536492" target="_blank">Chat with us</a>
         </div>
-        <div class="container header__content">
-            <a href="#" class="logo">BNB</a>
+        <div class="container header__content" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="hamburger-menu" aria-label="Menu" onclick="document.getElementById('mobile-nav').classList.toggle('active')" style="background: none; border: none; color: white; cursor: pointer; display: none;">
+                    <i data-feather="menu"></i>
+                </button>
+                <a href="#" class="logo">BNB</a>
+            </div>
+            
+            <nav class="desktop-nav" style="display: flex; gap: 1.5rem; justify-content: center; align-items: center;">
+                <a href="index.html" style="font-size: 0.85rem; text-transform: uppercase;">Home</a>
+                <a href="index.html#product-grid" style="font-size: 0.85rem; text-transform: uppercase;">Shop</a>
+                <a href="about.html" style="font-size: 0.85rem; text-transform: uppercase;">Our Story</a>
+                <a href="index.html#games-section" style="font-size: 0.85rem; text-transform: uppercase;">Royal Games</a>
+                <a href="mailto:contact@bellanbagheera.com" style="font-size: 0.85rem; text-transform: uppercase;">Contact</a>
+            </nav>
 
-            <div class="search-wrapper">
-                <input type="text" class="search-input" id="product-search" placeholder="Search the collection...">
-                <i data-feather="search" class="search-icon"></i>
-                <div id="search-results" class="search-results hidden"></div>
+            <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <div class="search-wrapper">
+                    <input type="text" class="search-input" id="product-search" placeholder="Search the collection...">
+                    <i data-feather="search" class="search-icon"></i>
+                    <div id="search-results" class="search-results hidden"></div>
+                </div>
+                <a href="#product-grid" class="btn btn-primary btn-shop-now" style="padding: 0.4rem 1rem;">Shop Now</a>
             </div>
         </div>
+        
+        <!-- Mobile Nav Menu -->
+        <div id="mobile-nav" class="mobile-nav" style="display: none; flex-direction: column; background: #050505; padding: 1rem; width: 100%;">
+            <a href="index.html" style="padding: 0.5rem; text-transform: uppercase; display: block;">Home</a>
+            <a href="index.html#product-grid" style="padding: 0.5rem; text-transform: uppercase; display: block;">Shop</a>
+            <a href="about.html" style="padding: 0.5rem; text-transform: uppercase; display: block;">Our Story</a>
+            <a href="index.html#games-section" style="padding: 0.5rem; text-transform: uppercase; display: block;">Royal Games</a>
+            <a href="mailto:contact@bellanbagheera.com" style="padding: 0.5rem; text-transform: uppercase; display: block;">Contact</a>
+        </div>
+        <style>
+            @media (max-width: 900px) {
+                .desktop-nav { display: none !important; }
+                .hamburger-menu { display: block !important; }
+                .search-wrapper { display: none !important; } 
+                .btn-shop-now { display: none !important; }
+                #mobile-nav.active { display: flex !important; margin-top: 1rem; }
+            }
+        </style>
     </header>
 
     <!-- Sticky Editorial Navigation Bar -->
@@ -139,6 +113,7 @@
             <h1 id="hero-title">Bella Nawaab Bagheera</h1>
             <p id="hero-subtitle">Not just another store. These are the toys, treats, and treasures we personally use
                 and love (or suggest avoiding!). Real feedback from real cats.</p>
+            <a href="#main-content" class="btn btn-primary hero-cta">Shop Our Picks</a>
         </div>
     </section>
 
@@ -148,18 +123,15 @@
     </section>
 
     <!-- Full Width Masonry Grid -->
-    <main class="container">
+    <main id="main-content" class="container">
         <!-- Loading State -->
-        <div id="loading-indicator" class="loading-indicator">
-            <div class="spinner"></div>
-            <p>Fetching royal treasures...</p>
-        </div>
+        <div id="loading-indicator" class="loading-indicator hidden"></div>
 
         <!-- Error State -->
         <div id="error-message" class="error-message hidden">
             <i data-feather="alert-circle"></i>
-            <p>Our royal courier was delayed. Please refresh to try again.</p>
-            <button class="btn btn-outline" onclick="window.location.reload()">Retry</button>
+            <p>Our royal courier was delayed. Please try again.</p>
+            <button class="btn btn-outline" onclick="window.retryFetch()">Retry</button>
         </div>
 
         <!-- No Results State -->
@@ -171,6 +143,16 @@
             <!-- Products injected here -->
         </div>
     </main>
+
+    <!-- Email Capture Form -->
+    <section class="email-capture container" style="text-align:center; padding: 4rem 1rem; background: #111; border-radius: 12px; margin-bottom: 4rem; border: 1px solid rgba(212,175,55,0.2);">
+        <h2 style="color: var(--color-primary); margin-bottom: 1rem;">Join the Royal Court</h2>
+        <p style="color: var(--color-text-muted); margin-bottom: 2rem;">Subscribe for exclusive treats, toy drops, and royal decrees straight to your inbox.</p>
+        <form action="#" method="POST" style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; max-width: 500px; margin: 0 auto;" onsubmit="event.preventDefault(); alert('Subscribed successfully!');">
+            <input type="email" placeholder="Enter your email" required style="flex: 1; padding: 0.8rem 1rem; border-radius: 4px; border: 1px solid #333; background: #000; color: #fff; outline: none; min-width: 200px;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2rem; border-radius: 4px; border: none; font-weight: bold; background: var(--color-primary); color: #000; cursor: pointer;">Subscribe</button>
+        </form>
+    </section>
 
     <!-- Royal Games Section -->
     <section id="games-section" class="games-section container">
@@ -267,7 +249,7 @@
 
     <!-- Floating WhatsApp -->
     <a href="https://api.whatsapp.com/send?phone=919336536492" target="_blank" class="whatsapp-float"
-        aria-label="Chat on WhatsApp">
+        aria-label="Chat on WhatsApp" title="Chat with us">
         <img src="images/icons/whatsapp.svg" alt="WhatsApp">
     </a>
 
@@ -295,6 +277,7 @@
 
     <!-- Scripts -->
     <script src="js/config.js"></script>
+    <script src="js/csv-parser.js"></script>
     <script src="js/notes-formatter.js"></script>
     <script src="js/script.js"></script>
     <script>

@@ -4,7 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BNB Ultimate Chase V4 🐾</title>
+    <title>BNB Ultimate Chase V4 🐾 | Bella Nawaab Bagheera</title>
+    <meta name="description" content="Play The Ultimate Chase on Bella Nawaab Bagheera! Sandbox mode cat game where you select your prey and hunt.">
+    <meta property="og:title" content="BNB Ultimate Chase V4 🐾 | Bella Nawaab Bagheera">
+    <meta property="og:description" content="Play The Ultimate Chase on Bella Nawaab Bagheera! Sandbox mode cat game where you select your prey and hunt.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="images/profile_avatar.png">
     <style>
         body {
             margin: 0;
@@ -12,6 +17,8 @@
             background-color: #121212;
             user-select: none;
             font-family: sans-serif;
+            -webkit-user-select: none;
+            touch-action: none;
         }
 
         canvas {
@@ -98,29 +105,112 @@
         .hidden {
             display: none !important;
         }
+
+        /* Swipe Lock UI */
+        #lock-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            z-index: 1000;
+            pointer-events: none;
+            /* Let clicks pass through, except specific elements */
+        }
+
+        .lock-slot {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            top: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: auto;
+            transition: opacity 0.3s;
+        }
+
+        #lock-key {
+            left: 20px;
+            background-image: url('images/key_icon.png');
+            cursor: grab;
+        }
+
+        #lock-target {
+            right: 20px;
+            background-image: url('images/lock_icon.png');
+            opacity: 0.5;
+        }
+
+        .locked-mode #lock-key {
+            cursor: default;
+        }
+        .back-to-shop {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+            color: #D4AF37;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #D4AF37;
+            border-radius: 8px;
+            font-family: sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .back-to-shop:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 
 <body>
+    <!-- Global Nav -->
+    <header style="position: absolute; top: 0; left: 0; width: 100%; padding: 1rem; display: flex; justify-content: space-between; align-items: center; z-index: 2000; pointer-events: none; box-sizing: border-box;">
+        <a href="index.html" style="font-size: 1.5rem; color: #fff; font-weight: bold; text-decoration: none; font-family: sans-serif; pointer-events: auto;">BNB</a>
+        <div style="display: flex; gap: 1rem; align-items: center; pointer-events: auto;">
+            <a href="index.html#product-grid" style="color: #000; background: #D4AF37; text-decoration: none; font-size: 0.9rem; text-transform: uppercase; font-family: sans-serif; font-weight: bold; padding: 0.5rem 1rem; border-radius: 4px;">Shop Now</a>
+            <button style="background: none; border: none; color: white; cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </div>
+    </header>
+    <a href="index.html" class="back-to-shop">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to Shop
+    </a>
     <div id="menu">
         <h1>Select Prey</h1>
         <div class="grid" id="prey-grid"></div>
     </div>
+
+    <!-- Swipe Lock UI -->
+    <div id="lock-container">
+        <div id="lock-target" class="lock-slot"></div>
+        <div id="lock-key" class="lock-slot"></div>
+    </div>
+
     <div id="exit-zone"></div>
     <canvas id="gameCanvas"></canvas>
 
+    <script src="js/exit-handler.js"></script>
     <script type="module">
         import { GameEngine, Draw, randomRange, UI, Patterns } from './game-utils.js';
 
         // --- Config ---
         const PREY_TYPES = {
-            rat: { name: 'Rat', icon: '🐀', env: 'wood', behavior: 'ground', speed: 6, sprite: 'rat_sprite.png', frames: 4, width: 64, height: 64 },
-            spider: { name: 'Spider', icon: '🕷️', env: 'tile', behavior: 'ground', speed: 10, sprite: 'spider_sprite.png', frames: 4, width: 64, height: 64 },
-            cockroach: { name: 'Cockroach', icon: '🪳', env: 'tile', behavior: 'ground', speed: 12, sprite: 'cockroach_sprite.png', frames: 4, width: 64, height: 64 },
-            bee: { name: 'Bee', icon: '🐝', env: 'sky', behavior: 'air', speed: 6 },
-            water: { name: 'Water', icon: '💧', env: 'dark', behavior: 'fluid', speed: 0 },
-            feather: { name: 'Feather', icon: '🪶', env: 'sky', behavior: 'float', speed: 2 },
-            butterfly: { name: 'Butterfly', icon: '🦋', env: 'sky', behavior: 'flutter', speed: 4 },
+            rat: { name: 'Mouse', icon: '🐭', env: 'cardboard', behavior: 'ground', speed: 10, sprite: 'mouse_sprite.png', frames: 4, width: 64, height: 64 },
+            spider: { name: 'Spider', icon: '🕷️', env: 'cardboard', behavior: 'ground', speed: 8, sprite: 'cute_spider.png', frames: 4, width: 64, height: 64 },
+            cockroach: { name: 'Roach', icon: '🪳', env: 'cardboard', behavior: 'ground', speed: 12, sprite: 'cute_cockroach.png', frames: 4, width: 64, height: 64 },
+            bee: { name: 'Bee', icon: '🐝', env: 'sky', behavior: 'air', speed: 10 },
+            butterfly: { name: 'Butterfly', icon: '🦋', env: 'sky', behavior: 'flutter', speed: 6 },
         };
 
         class ChaseGame extends GameEngine {
@@ -133,12 +223,12 @@
                 this.bgPattern = null;
                 this.config = null;
                 this.loadedSprites = {};
+                this.loadedAssets = {};
 
-                this.locked = false;
+                this.isLocked = false;
 
-                this.setupExit();
                 this.setupMenu();
-                this.setupLockUI();
+                this.setupSwipeLock();
             }
 
             setupMenu() {
@@ -150,7 +240,7 @@
                     btn.innerHTML = `<span class="prey-icon">${p.icon}</span><span class="prey-name">${p.name}</span>`;
 
                     // Mini preview bg
-                    if (p.env === 'wood') btn.style.background = '#3e2723';
+                    if (p.env === 'wood' || p.env === 'cardboard') btn.style.background = '#8d6e63';
                     if (p.env === 'sky') btn.style.background = '#87CEEB';
                     if (p.env === 'tile') btn.style.background = '#eee';
                     if (p.env === 'tile') btn.style.color = '#333';
@@ -165,37 +255,42 @@
 
                 this.config = PREY_TYPES[typeKey];
 
-                // Preload sprite if needed
+                UI.showToast("Loading assets...");
+
+                // Preload sprite
                 if (this.config.sprite && !this.loadedSprites[typeKey]) {
-                    UI.showToast("Loading assets...");
                     await this.loadSprite(typeKey, this.config.sprite);
                 }
 
-                UI.createFullscreenButton();
-                this.showLockToggle();
+                // Preload Env Assets
+                if (this.config.env === 'cardboard') {
+                    await this.loadAsset('cardboard_bg', 'images/cardboard_bg.png');
+                    await this.loadAsset('hole_overlay', 'images/hole_overlay.png');
+                }
+
                 UI.showToast("Hunt Begins!");
 
                 // Set Pattern
-                if (this.config.env === 'wood') this.bgPattern = Patterns.createWood(this.width, this.height);
-                if (this.config.env === 'tile') this.bgPattern = Patterns.createTiles(this.width, this.height);
-                if (this.config.env === 'sky') this.bgPattern = Patterns.createSky(this.width, this.height);
-                if (this.config.env === 'dark') this.bgPattern = Patterns.createDark(this.width, this.height);
+                if (this.config.env === 'cardboard') {
+                    this.bgPattern = this.ctx.createPattern(this.loadedAssets['cardboard_bg'], 'repeat');
+                }
+                else if (this.config.env === 'wood') this.bgPattern = Patterns.createWood(this.width, this.height);
+                else if (this.config.env === 'tile') this.bgPattern = Patterns.createTiles(this.width, this.height);
+                else if (this.config.env === 'sky') this.bgPattern = Patterns.createSky(this.width, this.height);
+                else this.bgPattern = Patterns.createDark(this.width, this.height);
 
                 // Init Logic
                 this.preyList = [];
                 this.holes = [];
 
                 if (this.config.behavior === 'ground') {
-                    // Create Holes
+                    // Create Holes / Spawns
                     this.holes.push({ x: 100, y: 100 });
                     this.holes.push({ x: this.width - 100, y: this.height - 100 });
                     this.holes.push({ x: 100, y: this.height - 100 });
                     this.holes.push({ x: this.width - 100, y: 100 });
                     // Spawn one immediately
                     this.spawnGroundPrey();
-                } else if (this.config.behavior === 'fluid') {
-                    // Start dripping
-                    setInterval(() => this.spawnWaterDrop(), 800);
                 } else {
                     // Air/Float: Spawn center
                     this.spawnAirPrey(this.width / 2, this.height / 2);
@@ -204,13 +299,22 @@
                 this.start((dt) => this.update(dt), (ctx) => this.draw(ctx));
             }
 
+            loadAsset(key, src) {
+                return new Promise((resolve, reject) => {
+                    if (this.loadedAssets[key]) return resolve();
+                    const img = new Image();
+                    img.onload = () => { this.loadedAssets[key] = img; resolve(); };
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            }
+
             loadSprite(key, src) {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
-                    img.crossOrigin = "Anonymous"; // Friendly for editing
+                    img.crossOrigin = "Anonymous";
                     img.onload = () => {
                         // Chroma Key Process
-                        // We assume top-left pixel is background color
                         const c = document.createElement('canvas');
                         c.width = img.width;
                         c.height = img.height;
@@ -219,21 +323,17 @@
 
                         const imgData = ctx.getImageData(0, 0, c.width, c.height);
                         const d = imgData.data;
-                        const rBg = d[0], gBg = d[1], bBg = d[2];
+                        const rBg = d[0], gBg = d[1], bBg = d[2]; // Sample top-left
 
-                        // Simple chroma key distance
                         for (let i = 0; i < d.length; i += 4) {
                             const r = d[i], g = d[i + 1], b = d[i + 2];
-                            // Distance from bg color
                             const dist = Math.sqrt((r - rBg) ** 2 + (g - gBg) ** 2 + (b - bBg) ** 2);
-                            if (dist < 30) { // Tolerance
+                            if (dist < 50) { // Tolerance
                                 d[i + 3] = 0; // Transparent
                             }
                         }
 
                         ctx.putImageData(imgData, 0, 0);
-
-                        // Create a new image from processed canvas
                         const processedImg = new Image();
                         processedImg.onload = () => {
                             this.loadedSprites[key] = processedImg;
@@ -246,86 +346,97 @@
                 });
             }
 
-            setupExit() {
-                let taps = 0, timer;
-                const z = document.getElementById('exit-zone');
-                const trig = () => {
-                    if (this.locked) return; // Ignore if locked
-                    taps++; clearTimeout(timer);
-                    timer = setTimeout(() => taps = 0, 600);
-                    if (taps >= 3) window.location.href = 'index.html';
+            setupSwipeLock() {
+                const key = document.getElementById('lock-key');
+                const target = document.getElementById('lock-target');
+                let dragging = false;
+                let startX = 0, startY = 0;
+                let keyStartX = 20, keyStartY = 10;
+
+                // Position helpers
+                const setPos = (el, x, y) => {
+                    el.style.left = x + 'px';
+                    el.style.top = y + 'px';
                 };
-                z.addEventListener('touchstart', (e) => { e.preventDefault(); trig(); });
-                z.addEventListener('mousedown', trig);
-            }
 
-            setupLockUI() {
-                // Prevent gesture scrolling when locked
-                document.addEventListener('touchmove', (e) => {
-                    if (this.locked) e.preventDefault();
-                }, { passive: false });
-            }
+                // Initial Pos
+                setPos(key, keyStartX, keyStartY);
 
-            showLockToggle() {
-                const btn = document.createElement('button');
-                btn.id = 'lock-btn';
-                btn.innerHTML = '🔓';
-                btn.style.cssText = `
-                    position: absolute; top: 20px; left: 20px;
-                    background: rgba(255,255,255,0.2); border: none;
-                    font-size: 24px; width: 50px; height: 50px; border-radius: 50%;
-                    cursor: pointer; z-index: 1000;
-                `;
-                document.body.appendChild(btn);
+                const onMove = (e) => {
+                    if (!dragging) return;
+                    e.preventDefault();
 
-                let holdTimer;
-                const toggleLock = (forceLock) => {
-                    if (forceLock === true || !this.locked) {
-                        // Lock
-                        this.locked = true;
-                        btn.innerHTML = '🔒';
-                        btn.style.background = 'rgba(255, 100, 100, 0.5)';
-                        UI.showToast("LOCKED: Long press to unlock");
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-                        // Enter FS
-                        if (document.documentElement.requestFullscreen) {
-                            document.documentElement.requestFullscreen().catch(() => { });
-                        }
+                    setPos(key, clientX - 30, clientY - 30); // Center grab
+                };
 
-                        // Hide other UI
-                        document.getElementById('exit-zone').style.display = 'none';
-                        const fsBtn = document.querySelector('button[style*="right: 20px"]'); // Hacky but works for now
-                        if (fsBtn) fsBtn.style.display = 'none';
+                const onEnd = (e) => {
+                    if (!dragging) return;
+                    dragging = false;
 
+                    const kRect = key.getBoundingClientRect();
+                    const tRect = target.getBoundingClientRect();
+
+                    // Check overlap
+                    const overlap = !(kRect.right < tRect.left ||
+                        kRect.left > tRect.right ||
+                        kRect.bottom < tRect.top ||
+                        kRect.top > tRect.bottom);
+
+                    if (overlap) {
+                        // Toggle Lock State
+                        this.toggleLockState(!this.isLocked);
+                    }
+
+                    // Reset or Snap
+                    if (this.isLocked) {
+                        // Snap to Target (Right side)
+                        setPos(key, window.innerWidth - 80, 10);
                     } else {
-                        // Unlock
-                        this.locked = false;
-                        btn.innerHTML = '🔓';
-                        btn.style.background = 'rgba(255,255,255,0.2)';
-                        UI.showToast("UNLOCKED");
-
-                        // Show other UI
-                        document.getElementById('exit-zone').style.display = 'block';
-                        const fsBtn = document.querySelector('button[style*="right: 20px"]');
-                        if (fsBtn) fsBtn.style.display = 'block';
+                        // Snap to Start (Left side)
+                        setPos(key, 20, 10);
                     }
                 };
 
-                // Click to Lock
-                btn.onclick = () => {
-                    if (!this.locked) toggleLock(true);
+                const onStart = (e) => {
+                    dragging = true;
+                    // Reset if needed
                 };
 
-                // Long press to Unlock
-                btn.onmousedown = btn.ontouchstart = () => {
-                    if (this.locked) {
-                        holdTimer = setTimeout(() => toggleLock(false), 2000); // 2s hold
-                        UI.showToast("Keep holding...");
+                key.addEventListener('mousedown', onStart);
+                key.addEventListener('touchstart', onStart, { passive: false });
+
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('touchmove', onMove, { passive: false });
+
+                window.addEventListener('mouseup', onEnd);
+                window.addEventListener('touchend', onEnd);
+
+                // Handle resize snap
+                window.addEventListener('resize', () => {
+                    if (this.isLocked) setPos(key, window.innerWidth - 80, 10);
+                });
+            }
+
+            toggleLockState(locked) {
+                this.isLocked = locked;
+                const menu = document.getElementById('menu');
+
+                if (locked) {
+                    UI.showToast("LOCKED 🔒");
+                    document.body.classList.add('locked-mode');
+                    // Request Fullscreen
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().catch(() => { });
                     }
-                };
-                btn.onmouseup = btn.onmouseleave = btn.ontouchend = () => {
-                    clearTimeout(holdTimer);
-                };
+                    // Hide Menu if visible? No, usually lock happens during game
+                } else {
+                    UI.showToast("UNLOCKED 🔓");
+                    document.body.classList.remove('locked-mode');
+                    // Show Exit UI ?
+                }
             }
 
             // --- Spawners ---
@@ -334,27 +445,20 @@
                 let endHole = this.holes[Math.floor(Math.random() * this.holes.length)];
                 while (endHole === startHole) endHole = this.holes[Math.floor(Math.random() * this.holes.length)];
 
-                const angle = Math.atan2(endHole.y - startHole.y, endHole.x - startHole.x);
+                // Add randomness to spawn point so they don't always come perfectly from center
+                const sx = startHole.x + randomRange(-20, 20);
+                const sy = startHole.y + randomRange(-20, 20);
+
+                const angle = Math.atan2(endHole.y - sy, endHole.x - sx);
 
                 this.preyList.push({
-                    x: startHole.x, y: startHole.y,
+                    x: sx, y: sy,
                     target: endHole,
                     vx: Math.cos(angle) * this.config.speed,
                     vy: Math.sin(angle) * this.config.speed,
                     state: 'run',
                     angle: angle + Math.PI / 2, // Rotate to face direction (assuming sprite points UP)
                     life: 1, // for alpha
-                    animTimer: 0
-                });
-            }
-
-            spawnWaterDrop() {
-                const x = randomRange(50, this.width - 50);
-                this.preyList.push({
-                    x: x, y: -20,
-                    vx: 0, vy: 0,
-                    state: 'fall',
-                    scale: 1,
                     animTimer: 0
                 });
             }
@@ -388,26 +492,14 @@
                     if (this.config.behavior === 'ground') {
                         // Move to target
                         const dist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
-                        if (dist < 20) {
-                            // Reached hole
+                        if (dist < 40) { // Reached hole
                             this.preyList.splice(i, 1);
                             setTimeout(() => this.spawnGroundPrey(), randomRange(500, 1500));
                         } else {
                             p.x += p.vx;
                             p.y += p.vy;
-                            // Random jitter
-                            p.x += randomRange(-2, 2);
-                        }
-                    }
-                    else if (this.config.behavior === 'fluid') {
-                        p.vy += 0.2; // Gravity
-                        p.y += p.vy;
-
-                        // Splash floor
-                        if (p.y > this.height) {
-                            this.audio.playTone(400, 'sine', 0.1, 0.1); // plop
-                            this.spawnParticles(p.x, this.height, '#aaf');
-                            this.preyList.splice(i, 1);
+                            // Random jitter/curve
+                            p.x += Math.sin(p.animTimer * 10) * 0.5;
                         }
                     }
                     else if (this.config.behavior === 'air' || this.config.behavior === 'flutter') {
@@ -421,26 +513,10 @@
                         if (p.y < 50) p.y += 2;
                         if (p.y > this.height - 50) p.y -= 2;
                     }
-                    else if (this.config.behavior === 'float') {
-                        p.vy += 0.05; // light grav
-                        p.vx += Math.sin(Date.now() / 1000) * 0.1;
-                        p.y += p.vy;
-                        p.x += p.vx;
-
-                        if (p.y > this.height + 50) {
-                            p.y = -50; p.vy = 0; p.x = randomRange(50, this.width - 50);
-                        }
-                    }
                 }
             }
 
             checkHit() {
-                // If fluid, spawn new drop on tap
-                if (this.config.behavior === 'fluid') {
-                    this.spawnWaterDrop(); // "Leaking"
-                    return;
-                }
-
                 let hit = false;
                 this.preyList.forEach(p => {
                     const dist = Math.hypot(this.input.x - p.x, this.input.y - p.y);
@@ -450,19 +526,10 @@
                         this.spawnParticles(p.x, p.y, '#FFD700');
 
                         if (this.config.behavior === 'ground') {
-                            // Scared! Speed up or reroute?
-                            // Just teleport for fun chase
-                            p.x = randomRange(this.width * 0.2, this.width * 0.8);
-                            p.y = randomRange(this.height * 0.2, this.height * 0.8);
-
-                            // Recalculate angle to target if we just teleported blindly, 
-                            // but simpler to just respawn it correctly or let it run to a new spot
-                            // For simplicity, let's keep it running towards original target but from new spot
-                            const angle = Math.atan2(p.target.y - p.y, p.target.x - p.x);
-                            p.vx = Math.cos(angle) * this.config.speed;
-                            p.vy = Math.sin(angle) * this.config.speed;
-                            p.angle = angle + Math.PI / 2;
-
+                            // Scared! Run away fast!
+                            p.vx *= -1.5;
+                            p.vy *= -1.5;
+                            p.angle += Math.PI;
                         } else {
                             p.x = randomRange(50, this.width - 50);
                             p.y = randomRange(50, this.height - 50);
@@ -489,17 +556,22 @@
             }
 
             draw(ctx) {
-                // Pattern BG
+                // Background
                 if (this.bgPattern) {
                     ctx.fillStyle = this.bgPattern;
                     ctx.fillRect(0, 0, this.width, this.height);
                 } else {
-                    ctx.fillStyle = this.config.env === 'dark' ? '#050510' : '#222';
+                    ctx.fillStyle = '#222';
                     ctx.fillRect(0, 0, this.width, this.height);
                 }
 
-                // Draw Holes for ground prey
-                if (this.config.behavior === 'ground') {
+                // Draw Holes (Cardboard Overlay)
+                if (this.config.env === 'cardboard' && this.loadedAssets['hole_overlay']) {
+                    const holeImg = this.loadedAssets['hole_overlay'];
+                    this.holes.forEach(h => {
+                        ctx.drawImage(holeImg, h.x - 60, h.y - 60, 120, 120);
+                    });
+                } else if (this.config.behavior === 'ground') {
                     this.holes.forEach(h => {
                         ctx.fillStyle = '#000';
                         ctx.beginPath();
@@ -514,33 +586,24 @@
                     ctx.translate(p.x, p.y);
 
                     if (this.config.behavior === 'ground') {
-                        // Rotation for running
                         ctx.rotate(p.angle);
-
-                        // Drop shadow to ground it
-                        ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                        ctx.shadowBlur = 5;
-                        ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 5;
-                    }
-
-                    if (this.config.behavior === 'air') {
+                        // Soft Shadow
+                        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetY = 5;
+                    } else {
                         ctx.shadowColor = 'rgba(0,0,0,0.2)';
                         ctx.shadowBlur = 20;
-                        ctx.shadowOffsetY = 40; // High shadow
+                        ctx.shadowOffsetY = 40;
                     }
 
                     if (this.config.sprite && this.loadedSprites[Object.keys(PREY_TYPES).find(key => PREY_TYPES[key] === this.config)]) {
                         const img = this.loadedSprites[Object.keys(PREY_TYPES).find(key => PREY_TYPES[key] === this.config)];
-                        // Animation Logic
-                        // Assume frames are horizontal
                         const frameIndex = Math.floor(p.animTimer * 10) % this.config.frames;
                         const fw = img.width / this.config.frames;
                         const fh = img.height;
-
                         ctx.drawImage(img, frameIndex * fw, 0, fw, fh, -fw / 2, -fh / 2, fw, fh);
-
                     } else {
-                        // Fallback to emoji
                         ctx.font = "60px sans-serif";
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';

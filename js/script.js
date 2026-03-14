@@ -17,13 +17,32 @@ document.addEventListener('DOMContentLoaded', function () {
     let favorites = new Set(JSON.parse(localStorage.getItem('bnb_favorites') || '[]'));
 
     // --- 0. UTILS ---
+
+    // Security: Escape HTML to prevent XSS from Google Sheet data
+    function escapeHTML(str) {
+        if (!str || typeof str !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Security: Validate URLs — only allow http/https
+    function sanitizeURL(url) {
+        if (!url || typeof url !== 'string') return '#';
+        const trimmed = url.trim();
+        if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+            return trimmed;
+        }
+        return '#';
+    }
+
     function showToast(message) {
         const container = document.getElementById('toast-container');
         if (!container) return;
 
         const toast = document.createElement('div');
         toast.className = 'toast';
-        toast.innerHTML = `<i data-feather="check-circle" style="color: var(--color-primary)"></i> ${message}`;
+        toast.innerHTML = `<i data-feather="check-circle" style="color: var(--color-primary)"></i> ${escapeHTML(message)}`;
 
         container.appendChild(toast);
         feather.replace();
@@ -80,84 +99,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- 1. DATA FETCHING ---
 
-    function parseCSV(text) {
-        try {
-            const lines = text.trim().split(/\r?\n(?=(?:[^"]*"[^"]*")*[^"]*$)/);
-            if (lines.length < 2) return [];
-
-            const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const keyMap = {
-                'title': 'title', 'name': 'title', 'product url': 'url',
-                'image url': 'image', 'store': 'store', 'category': 'category',
-                'notes': 'notes', 'price': 'price', 'recommendation': 'recommendation'
-            };
-            const mappedHeader = header.map(h => keyMap[h] || h);
-
-            return lines.slice(1).map(line => {
-                if (!line.trim()) return null;
-                const values = [];
-                let currentValue = '';
-                let inQuotes = false;
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    if (char === '"') {
-                        if (inQuotes && line[i + 1] === '"') { currentValue += '"'; i++; }
-                        else { inQuotes = !inQuotes; }
-                    } else if (char === ',' && !inQuotes) {
-                        values.push(currentValue.trim()); currentValue = '';
-                    } else { currentValue += char; }
-                }
-                values.push(currentValue.trim());
-                return mappedHeader.reduce((obj, key, index) => {
-                    if (key) obj[key] = values[index];
-                    return obj;
-                }, {});
-            }).filter(Boolean);
-        } catch (error) {
-            console.error("CSV Parse Error", error);
-            return [];
+    async function fetchWithRetry(url, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                return await res.text();
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                await new Promise(r => setTimeout(r, 1000));
+            }
         }
     }
 
     async function loadAllProducts() {
         if (!config.googleSheetUrl) return;
 
-        // Show Skeleton Loading, Hide Error/Grid
-        loadingIndicator.classList.add('hidden'); // Hide default spinner
-        errorMessage.classList.add('hidden');
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        if (errorMessage) errorMessage.classList.add('hidden');
         grid.style.opacity = '1';
 
-        // Render Skeletons
         const skeletonCount = 8;
         grid.innerHTML = Array(skeletonCount).fill(0).map(() => `
             <div class="skeleton-card">
-                <div class="skeleton-img"></div>
-                <div class="skeleton-text"></div>
-                <div class="skeleton-text short"></div>
+                <div class="skeleton-img shimmer"></div>
+                <div style="padding: 1rem;">
+                    <div class="skeleton-text shimmer"></div>
+                    <div class="skeleton-text short shimmer"></div>
+                </div>
             </div>
         `).join('');
 
         try {
-            const response = await fetch(config.googleSheetUrl);
-            const text = await response.text();
-
+            const text = await fetchWithRetry(config.googleSheetUrl, 3);
             const parsedProducts = parseCSV(text);
             allProducts = parsedProducts.map(product => ({
                 ...product,
                 price: product.price ? parseFloat(String(product.price).replace(/[^0-9.-]+/g, "")) : 0,
                 category: product.category ? product.category.split(',').map(c => c.trim()).filter(Boolean) : []
             }));
-
-            // Hide Loading, Show Grid
-            loadingIndicator.classList.add('hidden');
+            
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
             grid.style.opacity = '1';
-
         } catch (error) {
             console.error("Fetch Error", error);
-            loadingIndicator.classList.add('hidden');
-            errorMessage.classList.remove('hidden');
+            grid.innerHTML = '';
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
+            if (errorMessage) errorMessage.classList.remove('hidden');
         }
     }
+
+    window.retryFetch = async () => {
+        await loadAllProducts();
+        updateView();
+    };
 
     // --- 2. RENDERERS ---
 
@@ -168,10 +163,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const html = results.slice(0, 5).map(p => `
-            <div class="search-result-item" data-title="${p.title}">
-                <img src="${p.image}" class="search-result-thumb" alt="${p.title}">
+            <div class="search-result-item" data-title="${escapeHTML(p.title)}">
+                <img src="${sanitizeURL(p.image)}" class="search-result-thumb" alt="${escapeHTML(p.title)}">
                 <div class="search-result-info">
-                    <span class="search-result-title">${p.title}</span>
+                    <span class="search-result-title">${escapeHTML(p.title)}</span>
                     <span class="search-result-price">₹${p.price.toFixed(2)}</span>
                 </div>
             </div>
@@ -261,14 +256,14 @@ document.addEventListener('DOMContentLoaded', function () {
         spotlightSection.innerHTML = `
             <div class="spotlight-card">
                 <div class="spotlight-img-wrapper">
-                    <a href="${randomProduct.url}" target="_blank">
-                        <img src="${randomProduct.image}" class="spotlight-img" alt="${randomProduct.title}">
+                    <a href="${sanitizeURL(randomProduct.url)}" target="_blank">
+                        <img src="${sanitizeURL(randomProduct.image)}" class="spotlight-img" alt="${escapeHTML(randomProduct.title)}">
                     </a>
                 </div>
                 <div class="spotlight-content">
-                    <h2>${randomProduct.title}</h2>
-                    <p>${randomProduct.notes ? randomProduct.notes.substring(0, 150) + '...' : ' a royal favorite.'}</p>
-                    <a href="${randomProduct.url}" target="_blank" class="btn btn-primary">
+                    <h2>${escapeHTML(randomProduct.title)}</h2>
+                    <p>${randomProduct.notes ? escapeHTML(randomProduct.notes.substring(0, 150)) + '...' : ' a royal favorite.'}</p>
+                    <a href="${sanitizeURL(randomProduct.url)}" target="_blank" class="btn btn-primary">
                         Shop Now <i data-feather="arrow-right"></i>
                     </a>
                 </div>
@@ -301,7 +296,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderProducts(productsToRender) {
         if (!grid) return;
 
-        // No Results Handling
         if (productsToRender.length === 0) {
             grid.innerHTML = '';
             noResultsMessage.classList.remove('hidden');
@@ -310,55 +304,50 @@ document.addEventListener('DOMContentLoaded', function () {
             noResultsMessage.classList.add('hidden');
         }
 
-        // Staggered entry animation is handled by CSS nth-child or JS delay
         grid.innerHTML = productsToRender.map((product, index) => {
-            const delay = index * 50; // Faster stagger for smoother feel
+            const delay = index * 50; 
 
             // Logic for Recommendation Status (Badge)
             let badge = '';
             if (product.recommendation) {
                 const rec = product.recommendation.toLowerCase().trim();
+                // Inject Cat-Persona Endorsement Badges
                 if (rec === 'recommended') {
-                    badge = `<div class="product-card__badge product-card__badge--recommended">BNB PICK</div>`;
+                    badge = `<div class="product-card__badge product-card__badge--recommended">Bella Approved 🐾</div>`;
                 } else if (rec === 'ok') {
-                    badge = `<div class="product-card__badge product-card__badge--ok">GOOD FIND</div>`;
+                    badge = `<div class="product-card__badge product-card__badge--ok">Bagheera's Pick ✨</div>`;
                 } else if (rec === 'avoid') {
-                    badge = `<div class="product-card__badge product-card__badge--avoid">NOT OUR FAVE</div>`;
+                    badge = `<div class="product-card__badge product-card__badge--avoid">Nawaab Says No 😾</div>`;
                 }
             }
 
-            // Note Logic
-            let noteBtn = '';
-            if (product.notes) {
-                const originalIndex = allProducts.findIndex(p => p === product);
-                noteBtn = `<div class="txt-btn notes-trigger" data-product-index="${originalIndex}">READ NOTES</div>`;
-            }
-
+            const originalIndex = allProducts.findIndex(p => p === product);
             const isFav = favorites.has(product.title);
+
+            const safeTitle = escapeHTML(product.title);
+            const safeURL = sanitizeURL(product.url);
+            const safeImage = sanitizeURL(product.image);
 
             return `
             <div class="edit-card" style="animation-delay: ${delay}ms">
                 <div class="edit-card__img-wrapper">
                     ${badge}
                     
-                    <button class="love-btn ${isFav ? 'active' : ''}" data-u-favorite="${product.title}" aria-label="Add to favorites">
+                    <button class="love-btn ${isFav ? 'active' : ''}" data-u-favorite="${safeTitle}" aria-label="Add to favorites">
                         <i data-feather="heart"></i>
                     </button>
 
-                    <a href="${product.url}" target="_blank">
-                        <img src="${product.image}" class="edit-card__img" loading="lazy" alt="${product.title}">
+                    <a href="${safeURL}" target="_blank">
+                        <img src="${safeImage}" class="edit-card__img" loading="lazy" alt="${safeTitle}">
                     </a>
                 </div>
                 <div class="edit-card__details">
-                    <h3 class="edit-card__title">${product.title}</h3>
+                    <h3 class="edit-card__title">${safeTitle}</h3>
                     <p class="edit-card__price">₹${product.price.toFixed(2)}</p>
                     
-                    <div class="edit-card__meta-actions">
-                         ${noteBtn}
-                         <button class="icon-btn share-trigger" data-title="${product.title}" aria-label="Share">
-                            <i data-feather="share-2"></i>
-                         </button>
-                         <a href="${product.url}" target="_blank" class="txt-btn">BUY NOW</a>
+                    <div class="card-actions-grid" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                         <button class="btn btn-outline notes-trigger" data-product-index="${originalIndex}" style="width: 100%; border: 1px solid var(--color-primary); background: transparent; color: var(--color-primary); padding: 0.5rem; border-radius: 4px; cursor: pointer;">View Details</button>
+                         <a href="${safeURL}" target="_blank" class="btn btn-primary" style="width: 100%; background: var(--color-primary); color: #000; text-align: center; padding: 0.5rem; border-radius: 4px; font-weight: bold;">Buy Now</a>
                     </div>
                 </div>
             </div>
@@ -461,15 +450,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Image Col
                 const imgCol = document.createElement('div');
                 imgCol.className = 'modal__image-col';
-                imgCol.innerHTML = `<img src="${product.image}" alt="${product.title}">`;
+                imgCol.innerHTML = `<img src="${sanitizeURL(product.image)}" alt="${escapeHTML(product.title)}">`;
 
                 // Content Col
                 const contentCol = document.createElement('div');
                 contentCol.className = 'modal__content-col';
                 contentCol.innerHTML = `
-                    <h2 class="modal__title" id="notes-modal-title">${product.title}</h2>
+                    <h2 class="modal__title" id="notes-modal-title">${escapeHTML(product.title)}</h2>
                     <div class="modal__content" id="notes-modal-content">${formatNotesContent(product.notes)}</div>
-                    <a href="${product.url}" target="_blank" class="btn btn-primary" style="margin-top:2rem; align-self:flex-start;">
+                    <a href="${sanitizeURL(product.url)}" target="_blank" class="btn btn-primary" style="margin-top:2rem; align-self:flex-start;">
                         Buy Now <i data-feather="arrow-right"></i>
                     </a>
                 `;
@@ -484,16 +473,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Dynamic elements won't be caught.
                 // I MUST Attach listener to new close button OR change delegation to be on document/body.
 
-                // Attaching listener directly:
-                closeBtn.addEventListener('click', () => {
-                    const modal = document.getElementById('notes-modal');
-                    modal.classList.remove('is-open');
-                    setTimeout(() => modal.setAttribute('aria-hidden', 'true'), 300);
+                const modal = document.getElementById('notes-modal');
+
+                // Trap focus
+                modal.addEventListener('keydown', function trapFocus(e) {
+                    if (e.key !== 'Tab') return;
+                    
+                    const focusableElements = modalContainer.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    const firstFocus = focusableElements[0];
+                    const lastFocus = focusableElements[focusableElements.length - 1];
+
+                    if (e.shiftKey) { // shift + tab
+                        if (document.activeElement === firstFocus) {
+                            lastFocus.focus();
+                            e.preventDefault();
+                        }
+                    } else { // tab
+                        if (document.activeElement === lastFocus) {
+                            firstFocus.focus();
+                            e.preventDefault();
+                        }
+                    }
                 });
 
-                const modal = document.getElementById('notes-modal');
+                // Attaching listener directly:
+                closeBtn.addEventListener('click', () => {
+                    modal.classList.remove('is-open');
+                    setTimeout(() => modal.setAttribute('aria-hidden', 'true'), 300);
+                    if (trigger) trigger.focus(); // Return focus
+                });
+
                 modal.classList.add('is-open');
                 modal.setAttribute('aria-hidden', 'false');
+                closeBtn.focus(); // Set initial focus
 
                 // Instagram logic
                 if (window.instgrm) {
@@ -564,23 +576,37 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // --- Paw Cursor Trail ---
+        // --- Paw Cursor Trail (Pooled for Performance) ---
+        const PAW_POOL_SIZE = 10;
+        const pawPool = [];
+        let pawIndex = 0;
+
+        // Pre-create paw elements
+        for (let i = 0; i < PAW_POOL_SIZE; i++) {
+            const paw = document.createElement('div');
+            paw.classList.add('paw-trail');
+            paw.style.opacity = '0';
+            document.body.appendChild(paw);
+            pawPool.push(paw);
+        }
+
         let lastPawTime = 0;
         document.addEventListener('mousemove', (e) => {
             const now = Date.now();
             if (now - lastPawTime > 100) { // Throttle: 1 paw every 100ms
                 lastPawTime = now;
 
-                const paw = document.createElement('div');
-                paw.classList.add('paw-trail');
+                // Reuse pooled element
+                const paw = pawPool[pawIndex];
+                pawIndex = (pawIndex + 1) % PAW_POOL_SIZE;
+
                 paw.style.left = `${e.pageX}px`;
                 paw.style.top = `${e.pageY}px`;
-                document.body.appendChild(paw);
+                paw.style.opacity = '0.8';
 
-                // Fade and remove
+                // Fade out
                 setTimeout(() => {
                     paw.style.opacity = '0';
-                    setTimeout(() => paw.remove(), 500); // Wait for transition
                 }, 500);
             }
         });

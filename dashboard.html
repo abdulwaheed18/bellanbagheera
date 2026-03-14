@@ -213,34 +213,7 @@
             } catch (e) { console.error(e); }
         }
 
-        // Reusing the robust CSV parser logic
-        function parseCSV(text) {
-            const lines = text.trim().split(/\r?\n(?=(?:[^"]*"[^"]*")*[^"]*$)/);
-            if (lines.length < 2) return [];
-            const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const keyMap = { 'title': 'title', 'name': 'title', 'product url': 'url', 'image url': 'image', 'store': 'store', 'category': 'category', 'notes': 'notes', 'price': 'price', 'recommendation': 'recommendation' };
-            const mappedHeader = header.map(h => keyMap[h] || h);
-
-            return lines.slice(1).map(line => {
-                let values = [], current = '', inQuote = false;
-                for (let char of line) {
-                    if (char === '"') inQuote = !inQuote;
-                    else if (char === ',' && !inQuote) { values.push(current.trim().replace(/^"|"$/g, '')); current = ''; }
-                    else current += char;
-                }
-                values.push(current.trim().replace(/^"|"$/g, ''));
-                const obj = mappedHeader.reduce((o, k, i) => { if (k) o[k] = values[i]; return o; }, {});
-
-                // --- MULTI-CATEGORY LOGIC ---
-                // Store original string but also parse into array
-                if (obj.category) {
-                    obj.categories = obj.category.split(',').map(c => c.trim()).filter(Boolean);
-                } else {
-                    obj.categories = ['Uncategorized'];
-                }
-                return obj;
-            });
-        }
+        // parseCSV is now imported from js/csv-parser.js
 
         function render() {
             const container = document.getElementById('content');
@@ -376,6 +349,7 @@
 
         window.onload = init;
     </script>
+    <script src="js/csv-parser.js"></script>
 </body>
 
 </html>
