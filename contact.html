@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | Bella Nawaab Bagheera</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+    <meta name="description" content="Get in touch with Bella, Nawaab, Bagheera and their humans. We're here for any questions about our curated treasures.">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <!-- Google tag (gtag.js) - Placeholder for GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    
+    <style>
+        .page-content {
+            padding: 8rem 2rem 4rem;
+            max-width: 800px;
+            margin: 0 auto;
+            color: var(--color-text);
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .page-content h1 {
+            color: var(--color-primary);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .page-content p {
+            margin-bottom: 2rem;
+            color: var(--color-text-muted);
+        }
+
+        .contact-methods {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        @media (min-width: 768px) {
+            .contact-methods {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .contact-card {
+            background: #111;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(212,175,55,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: var(--color-primary);
+        }
+
+        .contact-icon {
+            font-size: 3rem;
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+        }
+
+        .contact-card h3 {
+            color: #fff;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        
+        .contact-card p {
+            margin-bottom: 0;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Sticky Navigation -->
+    <header class="header" style="position: fixed; top: 0; width: 100%; z-index: 1000; background: rgba(5,5,5,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="hamburger-menu" aria-label="Menu" onclick="document.getElementById('mobile-nav').classList.toggle('active')" style="background: none; border: none; color: white; cursor: pointer; display: none;">
+                    <i data-feather="menu"></i>
+                </button>
+                <a href="index.html" class="logo" style="font-size: 1.5rem; color: #fff; font-weight: bold; text-decoration: none;">BNB</a>
+            </div>
+            <nav class="desktop-nav" style="display: flex; gap: 1.5rem; align-items: center;">
+                <a href="index.html" style="color: #fff; text-decoration: none; font-size: 0.9rem; text-transform: uppercase;">Home</a>
+                <a href="index.html#product-grid" style="color: var(--color-primary); text-decoration: none; font-size: 0.9rem; text-transform: uppercase;">Shop</a>
+                <a href="about.html" style="color: #fff; text-decoration: none; font-size: 0.9rem; text-transform: uppercase;">Our Story</a>
+                <a href="index.html#games-section" style="color: #fff; text-decoration: none; font-size: 0.9rem; text-transform: uppercase;">Royal Games</a>
+                <a href="contact.html" style="color: var(--color-primary); text-decoration: none; font-size: 0.9rem; text-transform: uppercase;">Contact</a>
+            </nav>
+        </div>
+        <!-- Mobile Nav Menu -->
+        <div id="mobile-nav" class="mobile-nav" style="display: none; flex-direction: column; background: #050505; padding: 1rem; width: 100%;">
+            <a href="index.html" style="padding: 0.5rem; text-transform: uppercase; display: block; color: white; text-decoration: none;">Home</a>
+            <a href="index.html#product-grid" style="padding: 0.5rem; text-transform: uppercase; display: block; color: var(--color-primary); text-decoration: none;">Shop</a>
+            <a href="about.html" style="padding: 0.5rem; text-transform: uppercase; display: block; color: white; text-decoration: none;">Our Story</a>
+            <a href="index.html#games-section" style="padding: 0.5rem; text-transform: uppercase; display: block; color: white; text-decoration: none;">Royal Games</a>
+            <a href="contact.html" style="padding: 0.5rem; text-transform: uppercase; display: block; color: var(--color-primary); text-decoration: none;">Contact</a>
+        </div>
+        <style>
+            @media (max-width: 900px) {
+                .desktop-nav { display: none !important; }
+                .hamburger-menu { display: block !important; }
+                #mobile-nav.active { display: flex !important; margin-top: 1rem; }
+            }
+        </style>
+    </header>
+
+    <main class="page-content">
+        <h1>Contact the Royal Court</h1>
+        <p>Have a question about a product? Need help with an order? Want to send fan mail to Bella, Nawaab, and Bagheera? We're all ears (and whiskers).</p>
+
+        <div class="contact-methods">
+            <a href="mailto:bellanbagheera@gmail.com" class="contact-card">
+                <i data-feather="mail" class="contact-icon"></i>
+                <h3>Email Us</h3>
+                <p>bellanbagheera@gmail.com</p>
+                <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #888;">For general inquiries & support</p>
+            </a>
+
+            <a href="https://api.whatsapp.com/send?phone=919336536492" target="_blank" class="contact-card">
+                <i data-feather="message-circle" class="contact-icon"></i>
+                <h3>WhatsApp Chat</h3>
+                <p>+91 93365 36492</p>
+                <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #888;">For quick questions & assistance</p>
+            </a>
+            
+            <a href="https://instagram.com/bella_and_bagheera" target="_blank" class="contact-card" style="grid-column: 1 / -1; max-width: 400px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                <i data-feather="instagram" class="contact-icon"></i>
+                <h3>Instagram</h3>
+                <p>@bella_and_bagheera</p>
+                <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #888;">Slide into our DMs for daily cat content</p>
+            </a>
+        </div>
+    </main>
+
+    <footer class="footer-minimal">
+        <div class="container" style="text-align: center; padding: 2rem 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 4rem;">
+            <p class="footer-copy" style="color: #666; font-size: 0.8rem;">© 2026 Bella Nawaab Bagheera. Designed for Royalty.</p>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

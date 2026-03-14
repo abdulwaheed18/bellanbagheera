@@ -7,6 +7,10 @@
     <title>BNB | Bella Nawaab Bagheera — Curated Pet Products & Cat Games</title>
     <meta name="description" content="Discover curated toys, treats, and treasures personally tested by Bella, Nawaab & Bagheera. Real feedback from real cats, plus interactive cat enrichment games.">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Preload Critical Assets for Web Vitals -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" as="style">
+    <link rel="preload" href="images/profile_avatar.png" as="image">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Bella Nawaab Bagheera — Curated Pet Products">
@@ -24,11 +28,22 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#050505">
     <link rel="apple-touch-icon" href="images/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
 
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
     <!-- MicroModal -->
     <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
+
+    <!-- Google tag (gtag.js) - Placeholder for GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
 
 </head>
 
@@ -53,7 +68,7 @@
                 <a href="index.html#product-grid" style="font-size: 0.85rem; text-transform: uppercase;">Shop</a>
                 <a href="about.html" style="font-size: 0.85rem; text-transform: uppercase;">Our Story</a>
                 <a href="index.html#games-section" style="font-size: 0.85rem; text-transform: uppercase;">Royal Games</a>
-                <a href="mailto:contact@bellanbagheera.com" style="font-size: 0.85rem; text-transform: uppercase;">Contact</a>
+                <a href="contact.html" style="font-size: 0.85rem; text-transform: uppercase;">Contact</a>
             </nav>
 
             <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
@@ -72,7 +87,7 @@
             <a href="index.html#product-grid" style="padding: 0.5rem; text-transform: uppercase; display: block;">Shop</a>
             <a href="about.html" style="padding: 0.5rem; text-transform: uppercase; display: block;">Our Story</a>
             <a href="index.html#games-section" style="padding: 0.5rem; text-transform: uppercase; display: block;">Royal Games</a>
-            <a href="mailto:contact@bellanbagheera.com" style="padding: 0.5rem; text-transform: uppercase; display: block;">Contact</a>
+            <a href="contact.html" style="padding: 0.5rem; text-transform: uppercase; display: block;">Contact</a>
         </div>
         <style>
             @media (max-width: 900px) {
@@ -228,6 +243,20 @@
         </div>
     </section>
 
+    <!-- Instagram Feed Section -->
+    <section class="instagram-feed-section container" style="margin-top: 4rem; margin-bottom: 2rem;">
+        <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
+            <h2>Follow the Royal Court</h2>
+            <p>Catch daily decrees, naps, and chaos at <a href="https://instagram.com/bella_and_bagheera" target="_blank" style="color: var(--color-primary); text-decoration: none;">@bella_and_bagheera</a></p>
+        </div>
+        <div style="display: flex; justify-content: center;">
+            <!-- LightWidget Embed - Requires actual setup on their site for a real widget, using a placeholder/styled iframe for now -->
+            <!-- Script is loaded dynamically to prevent slowing down initial page load if possible, but for a static site, an iframe is easiest if a service like LightWidget.com is used -->
+            <iframe loading="lazy" src="https://embedsocial.com/api/pro_hashtag/de6e2794eb38ddc79e7f8f01b63753e19aeb3e46" width="100%" height="450px" frameborder="0" marginheight="0" marginwidth="0" style="border:none; max-width: 1000px; border-radius: 12px;"></iframe>
+            <!-- Note: The above EmbedSocial widget is a placeholder. For a real Instagram feed without a paid service, you often need the Instagram Basic Display API, which requires server-side token management. We'll use a stylized placeholder or a free tier widget embed code here. -->
+        </div>
+    </section>
+
     <!-- Newsletter Section -->
     <section class="newsletter-section">
         <div class="container newsletter-container">
@@ -259,6 +288,12 @@
             <div class="footer-socials" id="footer-socials">
                 <!-- JS Injected -->
             </div>
+            
+            <div style="margin: 1.5rem 0; display: flex; justify-content: center; gap: 1.5rem;">
+                <a href="privacy.html" style="color: #888; text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Privacy Policy</a>
+                <a href="terms.html" style="color: #888; text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Terms of Service</a>
+            </div>
+
             <p class="footer-copy">© 2026 CatCouture. Designed for Royalty.</p>
         </div>
     </footer>

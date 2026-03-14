@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BNB Fly-Zapper V2 🐾 | Bella Nawaab Bagheera</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
     <meta name="description" content="Play the Fly-Zapper game on Bella Nawaab Bagheera! High-speed reflexes and bug splats tailored for Bagheera and your feline friends.">
     <meta property="og:title" content="BNB Fly-Zapper V2 🐾 | Bella Nawaab Bagheera">
     <meta property="og:description" content="Play the Fly-Zapper game on Bella Nawaab Bagheera! High-speed reflexes and bug splats tailored for Bagheera and your feline friends.">
@@ -146,6 +147,68 @@
                 this.score++;
                 this.shake = 20; // SCREEEN SHAKEEE
                 this.audio.playPop(); // POP sound
+
+                // Show Score Update Toast
+                if (typeof UI !== 'undefined' && UI.showToast) {
+                    UI.showToast(`Score: ${this.score}! 🐾`);
+                }
+
+                // Dynamic Share Button Logic
+                let shareBtn = document.getElementById('insta-share-btn');
+                if (!shareBtn) {
+                    shareBtn = document.createElement('button');
+                    shareBtn.id = 'insta-share-btn';
+                    shareBtn.innerHTML = '📷 Share Score to Instagram';
+                    shareBtn.style.cssText = `
+                        position: absolute;
+                        bottom: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        z-index: 1000;
+                        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+                        color: white;
+                        padding: 12px 24px;
+                        border: none;
+                        border-radius: 20px;
+                        font-family: sans-serif;
+                        font-weight: bold;
+                        font-size: 16px;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                    `;
+                    
+                    shareBtn.onmousedown = (e) => e.stopPropagation();
+                    shareBtn.ontouchstart = (e) => e.stopPropagation();
+
+                    shareBtn.onclick = async () => {
+                        const text = `My cat just swatted ${this.score} bugs on The Fly-Zapper at Bella Nawaab Bagheera! 🐾 Can your cat beat this? Play at bellanbagheera.com/bughunt.html @bella_and_bagheera`;
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: 'BNB Fly-Zapper Score',
+                                    text: text,
+                                    url: 'https://bellanbagheera.com/bughunt.html'
+                                });
+                            } catch (err) {
+                                console.log("Error sharing", err);
+                            }
+                        } else {
+                            navigator.clipboard.writeText(text);
+                            if (typeof UI !== 'undefined' && UI.showToast) {
+                                UI.showToast("Score copied to clipboard for Instagram!");
+                            } else {
+                                alert("Score copied to clipboard for Instagram!");
+                            }
+                        }
+                    };
+                    
+                    document.body.appendChild(shareBtn);
+                } else {
+                     // Flash effect to draw attention
+                     shareBtn.style.transform = 'translateX(-50%) scale(1.1)';
+                     setTimeout(() => shareBtn.style.transform = 'translateX(-50%) scale(1)', 200);
+                }
 
                 // Spawn Particles (Juice)
                 for (let i = 0; i < 15; i++) {

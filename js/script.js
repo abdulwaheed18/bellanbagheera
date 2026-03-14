@@ -174,8 +174,70 @@ document.addEventListener('DOMContentLoaded', function () {
 
         searchResults.innerHTML = html;
         searchResults.classList.remove('hidden');
+    }
 
-        // Nav logic
+    // Add smooth scrolling specifically for mobile menu links
+    document.querySelectorAll('.mobile-nav a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+                // Close mobile menu
+                document.getElementById('mobile-nav').classList.remove('active');
+            }
+        });
+    });
+
+    // Update active nav state based on URL/Scroll
+    function updateNavActiveState() {
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        const hash = window.location.hash;
+        
+        // Desktop Nav
+        document.querySelectorAll('.desktop-nav a').forEach(link => {
+            const linkPath = link.getAttribute('href').split('/').pop() || 'index.html';
+            const linkHash = link.getAttribute('href').split('#')[1] ? '#' + link.getAttribute('href').split('#')[1] : '';
+            
+            // Reset
+            link.style.color = '#fff';
+            
+            // Exact match
+            if (currentPath === linkPath.split('#')[0]) {
+                if (hash && linkHash && hash === linkHash) {
+                    link.style.color = 'var(--color-primary)';
+                } else if (!hash && !linkHash) {
+                    link.style.color = 'var(--color-primary)';
+                }
+            }
+        });
+        
+        // Mobile Nav
+        document.querySelectorAll('.mobile-nav a').forEach(link => {
+            const linkPath = link.getAttribute('href').split('/').pop() || 'index.html';
+            const linkHash = link.getAttribute('href').split('#')[1] ? '#' + link.getAttribute('href').split('#')[1] : '';
+            
+            link.style.color = '#fff';
+            
+            if (currentPath === linkPath.split('#')[0]) {
+                if (hash && linkHash && hash === linkHash) {
+                    link.style.color = 'var(--color-primary)';
+                } else if (!hash && !linkHash) {
+                    link.style.color = 'var(--color-primary)';
+                }
+            }
+        });
+    }
+
+    // Run on load and hash change
+    window.addEventListener('load', updateNavActiveState);
+    window.addEventListener('hashchange', updateNavActiveState);
+
+    // Nav logic
+    function setupSearchResultsClickLogic() {
         searchResults.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', () => {
                 const title = item.dataset.title;
@@ -190,6 +252,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 searchResults.classList.add('hidden');
             });
         });
+    }
+
+    function renderSearchResults(results) {
+        if (!results.length) {
+            searchResults.classList.add('hidden');
+            return;
+        }
+
+        const html = results.slice(0, 5).map(p => `
+            <div class="search-result-item" data-title="${escapeHTML(p.title)}">
+                <img src="${sanitizeURL(p.image)}" class="search-result-thumb" alt="${escapeHTML(p.title)}">
+                <div class="search-result-info">
+                    <span class="search-result-title">${escapeHTML(p.title)}</span>
+                    <span class="search-result-price">₹${p.price.toFixed(2)}</span>
+                </div>
+            </div>
+        `).join('');
+
+        searchResults.innerHTML = html;
+        searchResults.classList.remove('hidden');
+        setupSearchResultsClickLogic();
     }
 
     function handleSearch() {
@@ -346,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p class="edit-card__price">₹${product.price.toFixed(2)}</p>
                     
                     <div class="card-actions-grid" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                         <button class="btn btn-outline notes-trigger" data-product-index="${originalIndex}" style="width: 100%; border: 1px solid var(--color-primary); background: transparent; color: var(--color-primary); padding: 0.5rem; border-radius: 4px; cursor: pointer;">View Details</button>
+                         <a href="product.html?title=${encodeURIComponent(product.title)}" class="btn btn-outline" style="width: 100%; border: 1px solid var(--color-primary); background: transparent; color: var(--color-primary); padding: 0.5rem; border-radius: 4px; text-decoration: none; text-align: center; display: inline-block;">View Details</a>
                          <a href="${safeURL}" target="_blank" class="btn btn-primary" style="width: 100%; background: var(--color-primary); color: #000; text-align: center; padding: 0.5rem; border-radius: 4px; font-weight: bold;">Buy Now</a>
                     </div>
                 </div>
